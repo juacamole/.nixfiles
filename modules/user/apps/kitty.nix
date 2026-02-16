@@ -25,6 +25,6 @@
 
       shell = "zsh";
     };
-    themeFile = "GruvboxDarkSoft"; 
+    themeFile = "gruvbox-dark-soft"; 
   };
 }

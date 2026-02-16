@@ -2,7 +2,7 @@
 
   imports = [
   ./apps/kitty.nix
-  ]
+  ];
 
   home.username = "kuan";
   home.homeDirectory = "/home/kuan";
@@ -31,5 +31,5 @@
 
   programs.zsh.enable = true;
 
-  home.stateVersion = "24.11";
+  home.stateVersion = "25.11";
 }

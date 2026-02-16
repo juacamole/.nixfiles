@@ -13,15 +13,21 @@
   i18n.defaultLocale = "en_US.UTF-8";
   
   # Locale/Keyboard
-  services.xserver.xkb = { layout = "ch"; variant = ""; };
+  services.xserver.xkb = { 
+    layout = "ch"; 
+    variant = ""; 
+  };
   console.keyMap = "sg";
+
+  # Shell Configuration
+  programs.zsh.enable = true;
 
   # User Definition
   users.users.kuan = {
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" "video" ];
     shell = pkgs.zsh;
-    };
+  };
 
   # Nix Maintenance
   nix.gc = {
@@ -29,7 +35,12 @@
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
+  
+  # Enable Flakes and the 'nix' command
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  # Allow proprietary software 
   nixpkgs.config.allowUnfree = true;
-  system.stateVersion = "25.11";}
+
+  system.stateVersion = "25.11";
+}

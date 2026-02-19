@@ -2,6 +2,8 @@
 
   imports = [
   ./apps/kitty.nix
+  ./apps/hyprland/default.nix
+  ./apps/zsh.nix
   ];
 
   home.username = "kuan";
@@ -13,7 +15,6 @@
     neovim
     fastfetch
     firefox
-    kitty
     waybar
     wofi
     nwg-look
@@ -27,7 +28,7 @@
   ];
 
   # This links Hyprland to the config
-  xdg.configFile."hypr".source = ../../config/hypr;
+#  xdg.configFile."hypr".source = ../../config/hypr;
 
   programs.zsh.enable = true;
 

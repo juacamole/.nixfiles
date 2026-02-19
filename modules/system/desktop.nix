@@ -14,6 +14,16 @@
     defaultSession = "hyprland";
   };
 
+  hardware.graphics = {
+    enable32Bit = true; 
+  };
+
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+  };
+
   services.desktopManager.plasma6.enable = true;
   programs.hyprland.enable = true;
 

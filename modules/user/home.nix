@@ -11,7 +11,6 @@
 
   # Apps that don't need special config
   home.packages = with pkgs; [
-    vim
     neovim
     fastfetch
     firefox
@@ -25,10 +24,12 @@
     rustup
     discord-ptb
     pavucontrol
+    gcc
+    ly
   ];
 
-  # This links Hyprland to the config
-#  xdg.configFile."hypr".source = ../../config/hypr;
+  programs.direnv.enable = true;
+  programs.direnv.nix-direnv.enable = true;
 
   programs.zsh.enable = true;
 

@@ -22,6 +22,28 @@
   # Shell Configuration
   programs.zsh.enable = true;
 
+  # Display manager for login manager ig
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --cmd start-hyprland";
+        user = "greeter";
+      };
+    };
+  };
+
+  # Also some shi to prevent login mgr to show errors
+  systemd.services.greetd.serviceConfig = {
+    Type = "idle";
+    StandardInput = "tty";
+    StandardOutput = "tty";
+    StandardError = "journal";
+    TTYReset = true;
+    TTYVHangup = true;
+    TTYVTDisallocate = true;
+  };
+
   # User Definition
   users.users.kuan = {
     isNormalUser = true;

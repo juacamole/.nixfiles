@@ -8,6 +8,7 @@
     # Aliases
     shellAliases = {
       nix-switch = "sudo nixos-rebuild switch --flake ~/.nixfiles#main";
+			nix-init = "printf 'use flake' > .envrc && direnv allow";
       kys = "shutdown now";
       vim = "nvim";
       vi = "nvim";

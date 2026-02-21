@@ -21,9 +21,12 @@
     WLR_NO_HARDWARE_CURSORS = "1";
   };
 
-  programs.direnv.enable = true;
-  programs.direnv.nix-direnv.enable = true;
   programs.zsh.enable = true;
+
+	programs.direnv = {
+	  enable = true;
+	  nix-direnv.enable = true;
+	};
 
   home.stateVersion = "25.11";
 }

@@ -6,7 +6,7 @@
     fastfetch
     firefox
     waybar
-    wofi
+    rofi
     nwg-look
     hyprlock
     git
@@ -30,5 +30,6 @@
   	satty
   	wl-clipboard
 		pkgs.swaynotificationcenter
+		nautilus
   ];
 }

@@ -3,7 +3,7 @@ let
   mainMod = "SUPER";
   terminal = "kitty";
   fileManager = "nautilus";
-  menu = "wofi --show drun";
+  menu = "rofi -show run";
 in {
   wayland.windowManager.hyprland.settings = {
     bind = [

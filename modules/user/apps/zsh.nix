@@ -1,4 +1,4 @@
-{ pkgs, config, ... }: {
+{ pkgs, config, lib, ... }: { # Added lib here
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -37,20 +37,22 @@
       }
     ];
 
-    initExtraFirst = ''
-      if [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
-        source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
-      fi
-    '';
+    initContent = lib.mkMerge [
+      (lib.mkBefore ''
+        if [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
+          source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
+        fi
+      '')
 
-    initExtra = ''
-      [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+      ''
+        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-      typeset -g POWERLEVEL9K_DIR_FOREGROUND='#D053A1'
-      typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='#D053A1'
-      typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='#D053A1'
+        typeset -g POWERLEVEL9K_DIR_FOREGROUND='#D053A1'
+        typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='#D053A1'
+        typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='#D053A1'
 
-      export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
-    '';
+        export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+      ''
+    ];
   };
 }

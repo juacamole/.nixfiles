@@ -29,6 +29,7 @@
     scarab 
     steam-run
     inputs.zen-browser.packages."${pkgs.system}".default
+    swww
   ];
 
   home.sessionVariables = {

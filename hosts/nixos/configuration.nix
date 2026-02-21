@@ -1,6 +1,7 @@
 { config, pkgs, ... }: {
   imports = [ 
     ./hardware-configuration.nix
+    ./grub.nix
     ../../modules/system/boot.nix
     ../../modules/system/desktop.nix
     ../../modules/system/audio.nix
@@ -12,28 +13,56 @@
   time.timeZone = "Europe/Zurich";
   i18n.defaultLocale = "en_US.UTF-8";
   
-  # Locale/Keyboard
   services.xserver.xkb = { 
     layout = "ch"; 
     variant = ""; 
   };
+  # load nvidia driver
+  services.xserver.videoDrivers = ["nvidia"]; 
   console.keyMap = "sg";
+
+  # nvidia graphic config
+  hardware.graphics.enable = true;
+
+  hardware.nvidia = {
+    modesetting.enable = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = false; 
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+
+    prime = {
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;
+      };
+      intelBusId = "PCI:0:2:0";    
+      nvidiaBusId = "PCI:1:0:0"; 
+    };
+  };
 
   # Shell Configuration
   programs.zsh.enable = true;
 
-  # Display manager for login manager ig
-  services.greetd = {
+  # Steam
+  programs.steam = {
     enable = true;
-    settings = {
-      default_session = {
-        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --cmd start-hyprland";
-        user = "greeter";
-      };
-    };
+    remotePlay.openFirewall = true; 
+    dedicatedServer.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
   };
 
-  # Also some shi to prevent login mgr to show errors
+  # Login Manager
+  services.greetd = {
+  enable = true;
+  settings = {
+    default_session = {
+      command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd start-hyprland";
+      user = "kuan";
+        };
+      };
+   };
   systemd.services.greetd.serviceConfig = {
     Type = "idle";
     StandardInput = "tty";
@@ -47,7 +76,7 @@
   # User Definition
   users.users.kuan = {
     isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" "video" ];
+    extraGroups = [ "networkmanager" "wheel" "video" "render" ]; 
     shell = pkgs.zsh;
   };
 
@@ -58,10 +87,7 @@
     options = "--delete-older-than 7d";
   };
   
-  # Enable Flakes and the 'nix' command
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
-  # Allow proprietary software 
   nixpkgs.config.allowUnfree = true;
 
   system.stateVersion = "25.11";

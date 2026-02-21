@@ -15,7 +15,7 @@ in {
       "${mainMod}, V, togglefloating,"
       "${mainMod}, SPACE, exec, ${menu}"
       "${mainMod}, F, fullscreen,"
-      "${mainMod}, Z, exec, zen-browser"
+      "${mainMod}, Z, exec, zen-beta"
       "${mainMod}, P, pseudo," 
       "${mainMod}, I, togglesplit," 
       "${mainMod}, Tab, changegroupactive, f"

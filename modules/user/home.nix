@@ -4,33 +4,12 @@
     ./apps/kitty.nix
     ./apps/hyprland/default.nix
     ./apps/zsh.nix
+		./apps/defaults.nix
+		./apps/hypridle.nix
   ];
 
   home.username = "kuan";
   home.homeDirectory = "/home/kuan";
-
-  # Apps that don't need special config
-  home.packages = with pkgs; [
-    neovim
-    fastfetch
-    firefox
-    waybar
-    wofi
-    nwg-look
-    hyprlock
-    git
-    quickshell
-    rustc
-    rustup
-    discord-ptb
-    pavucontrol
-    gcc
-    ly
-    scarab 
-    steam-run
-    inputs.zen-browser.packages."${pkgs.system}".default
-    swww
-  ];
 
   home.sessionVariables = {
     STEAM_EXTRA_COMPAT_RUNTIME_PATHS = "/home/kuan/.steam/root/compatibilitytools.d";

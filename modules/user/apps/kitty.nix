@@ -15,7 +15,7 @@
       cursor_trail = 1;
       enable_audio_bell = "no";
       hide_window_decorations = "yes";
-      confirm_os_window_close = 0;
+      confirm_os_window_close = 1;
 
       scrollback_lines = 5000;
 

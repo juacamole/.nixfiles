@@ -16,10 +16,11 @@
     system = "x86_64-linux";
   in {
     nixosConfigurations.main = nixpkgs.lib.nixosSystem {
-      inherit system;
       specialArgs = { inherit inputs username; }; 
       modules = [
-      ./hosts/nixos/configuration.nix
+        { nixpkgs.hostPlatform = system; }
+
+        ./hosts/nixos/configuration.nix
         home-manager.nixosModules.home-manager {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;

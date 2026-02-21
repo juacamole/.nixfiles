@@ -10,7 +10,7 @@ in {
       "${mainMod} SHIFT, B, exec, ~/.config/hypr/scripts/waybar-launch.sh"
       "${mainMod}, RETURN, exec, ${terminal}"
       "${mainMod}, Q, killactive,"
-      "${mainMod} SHIFT, M, exec, wlogout"
+      "${mainMod} SHIFT, M, exec, hyprlock"
       "${mainMod}, E, exec, ${fileManager}"
       "${mainMod}, V, togglefloating,"
       "${mainMod}, SPACE, exec, ${menu}"
@@ -20,8 +20,8 @@ in {
       "${mainMod}, I, togglesplit," 
       "${mainMod}, Tab, changegroupactive, f"
 
-      "${mainMod} SHIFT, S, exec, grim -g \"$(slurp -o -r -c '##ff0000ff')\" -t ppm - | satty --filename - --fullscreen --output-filename ~/Pictures/Screenshots/satty-$(date '+%Y%m%d-%H:%M:%S').png"
-
+			# Screenshot
+			"${mainMod} SHIFT, S, exec, hyprshot -m region --raw | satty --filename -"
       # Move focus
       "${mainMod}, H, movefocus, l"
       "${mainMod}, L, movefocus, r"

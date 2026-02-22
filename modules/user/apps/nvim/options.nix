@@ -9,6 +9,8 @@
       expandtab = false;
       shiftwidth = 4;
       tabstop = 4;
+	  number = true;
+	  relativenumber = true;
     };
     autoCmd = [{
       event = [ "FileType" ];

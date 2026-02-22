@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "actions-preview": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1759462626,
+        "narHash": "sha256-YUeWBXxxeurfWBi0PjUi6izqYAvUw9DHmvsuPXm7ohw=",
+        "owner": "aznhe21",
+        "repo": "actions-preview.nvim",
+        "rev": "cb938c25edaac38d362555f19244a9cb85d561e8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "aznhe21",
+        "repo": "actions-preview.nvim",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -118,6 +134,7 @@
     },
     "root": {
       "inputs": {
+        "actions-preview": "actions-preview",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixvim": "nixvim",

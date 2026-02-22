@@ -4,9 +4,11 @@
     ./apps/kitty.nix
     ./apps/hyprland/default.nix
     ./apps/zsh.nix
-		./apps/defaults.nix
-		./apps/hypridle.nix
-		./apps/nvim/default.nix
+	./apps/defaults.nix
+	./apps/hypridle.nix
+	inputs.nixvim.homeModules.nixvim
+	./apps/nvim/default.nix
+	./apps/rofi.nix
   ];
 
   home.username = "kuan";

@@ -2,33 +2,43 @@
 
   # Apps that don't need special config
   home.packages = with pkgs; [
-    fastfetch
+	
+	# Gaming
+    steam-run
+    scarab 
+
+	# Env
+    inputs.zen-browser.packages."${pkgs.system}".default
+    discord-ptb
     firefox
-    waybar
-    rofi
-    nwg-look
-    hyprlock
-    git
+    fastfetch
     quickshell
+    nwg-look
+
+	# Coding
+    gcc
+    nodejs
     rustc
     rustup
-    discord-ptb
-    pavucontrol
-    gcc
-    scarab 
-    steam-run
-    inputs.zen-browser.packages."${pkgs.system}".default
-    swww
     unzip
-    lua-language-server
-    stylua
-    nil
+    git
+
+	# nvim stuff
     tree-sitter
-    nodejs
-		hyprshot
+    lua-language-server
+    nil
+    stylua
+
+	# Hypr stuff
+    hyprlock
+    waybar
+	nautilus
+	hyprshot
   	satty
+	pkgs.swaynotificationcenter
   	wl-clipboard
-		pkgs.swaynotificationcenter
-		nautilus
+    pavucontrol
+    rofi
+    swww
   ];
 }

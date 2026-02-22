@@ -6,6 +6,7 @@
     ./apps/zsh.nix
 		./apps/defaults.nix
 		./apps/hypridle.nix
+		./apps/nvim/default.nix
   ];
 
   home.username = "kuan";

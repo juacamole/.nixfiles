@@ -2,7 +2,6 @@
 
   # Apps that don't need special config
   home.packages = with pkgs; [
-    neovim
     fastfetch
     firefox
     waybar

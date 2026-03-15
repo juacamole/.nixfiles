@@ -12,7 +12,7 @@
 	./apps/gazelle.nix
 	./apps/claude.nix
 	./apps/waybar.nix
-	./apps/p10k.nix
+	./apps/cursor.nix
   ];
 
   home.username = "kuan";

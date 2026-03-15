@@ -1,23 +1,26 @@
-{ ... }: {
+{ ... }:
+let
+  goldBright = "dac48aff";
+  goldMid = "c8b078ff";
+  goldDim = "8b7355ff";
+  panelBg = "3a2a18ff";
+  inactive = "4a3828ff";
+in
+{
   wayland.windowManager.hyprland.settings = {
-    # input
     input = {
       kb_layout = "ch";
       kb_variant = "de";
       follow_mouse = 1;
       sensitivity = -0.25;
       touchpad.natural_scroll = false;
-	  kb_options = caps:escape;
+      kb_options = "caps:escape";
     };
-
     device = [{
       name = "epic-mouse-v1";
       sensitivity = -0.5;
     }];
-
     cursor.no_hardware_cursors = true;
-
-    # animations
     animations = {
       enabled = true;
       bezier = [ "overshot, 0.13, 0.99, 0.29, 1.1" ];
@@ -29,9 +32,7 @@
         "workspacesOut, 1, 2, default, slidefade 80%"
       ];
     };
-
-    # decorations & variables
-     decoration = {
+    decoration = {
       rounding = 0;
       active_opacity = 1.0;
       inactive_opacity = 1.0;
@@ -41,18 +42,15 @@
         passes = 1;
       };
     };
-
     general = {
       gaps_in = 0;
       gaps_out = 0;
       border_size = 1;
-      "col.active_border" = "rgba(eeeeeeff) rgba(ffffffff) 45deg";
-      "col.inactive_border" = "rgba(333333ff)";
+      "col.active_border" = "rgba(${goldBright}) rgba(${goldDim}) 45deg";
+      "col.inactive_border" = "rgba(${inactive})";
       layout = "dwindle";
     };
-
     misc.disable_hyprland_logo = true;
-    
     dwindle = {
       pseudotile = true;
       preserve_split = true;

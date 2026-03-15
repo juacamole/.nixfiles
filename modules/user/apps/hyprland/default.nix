@@ -21,7 +21,7 @@
         "~/bash/tanatos/tanatos.sh"
 		"hypridle"
 		"swaync"
-		"waybar"
+		"waybar &"
       ];
 
       # Environment

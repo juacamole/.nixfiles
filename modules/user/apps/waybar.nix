@@ -19,6 +19,7 @@ let
   activeBorder = "rgba(180, 155, 105, 0.25)";
   activeBorderTop = "rgba(210, 190, 140, 0.35)";
   activeBorderBottom = "rgba(40, 30, 15, 0.5)";
+  innerDivider = "1px solid rgba(100, 75, 40, 0.3)";
 
   barMarginTop = "8";
   barMarginSide = "12";
@@ -50,7 +51,7 @@ in
       "margin-right": ${barMarginSide},
       "modules-left": ["hyprland/workspaces"],
       "modules-center": ["custom/clock"],
-      "modules-right": ["battery", "custom/net"],
+      "modules-right": ["pulseaudio", "pulseaudio#mic", "battery", "custom/net"],
       "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
@@ -75,6 +76,23 @@ in
         "on-click": "if [ -f /tmp/waybar-clock-state ]; then rm /tmp/waybar-clock-state; else touch /tmp/waybar-clock-state; fi",
         "tooltip": false
       },
+	  "pulseaudio": {
+  		"format": "{volume}%",
+ 	    "format-muted": "MUTE",
+ 		"on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+  		"on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%+",
+		"on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-",
+  		"tooltip": false
+	  },
+	  "pulseaudio#mic": {
+ 	    "format": "{format_source}",
+  		"format-source": "MIC {volume}%",
+  		"format-source-muted": "MIC OFF",
+		"on-click": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
+		"on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 2%+",
+  		"on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 2%-",
+  		"tooltip": false
+	  },
       "battery": {
         "format": "{capacity}%",
         "interval": 30,
@@ -156,7 +174,7 @@ in
       box-shadow: ${panelShadow};
     }
 
-    #battery {
+    #pulseaudio {
       background: ${panelBg};
       border: 1px solid ${panelBorder};
       border-top: 1px solid ${panelBorderTop};
@@ -171,6 +189,31 @@ in
       color: ${goldMid};
       text-shadow: ${textShadow};
       box-shadow: ${panelShadow};
+      border-right: none;
+    }
+
+    #pulseaudio.mic {
+      border-radius: 0;
+      border-left: ${innerDivider};
+      border-right: none;
+    }
+
+    #battery {
+      background: ${panelBg};
+      border: 1px solid ${panelBorder};
+      border-top: 1px solid ${panelBorderTop};
+      border-bottom: 1px solid ${panelBorderBottom};
+      border-radius: 0;
+      padding: 0 12px;
+      margin: 4px 0;
+      margin-right: 0;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+      color: ${goldMid};
+      text-shadow: ${textShadow};
+      box-shadow: ${panelShadow};
+      border-left: ${innerDivider};
       border-right: none;
     }
 
@@ -189,7 +232,7 @@ in
       color: ${goldMid};
       text-shadow: ${textShadow};
       box-shadow: ${panelShadow};
-      border-left: 1px solid rgba(100, 75, 40, 0.3);
+      border-left: ${innerDivider};
     }
   '';
 }

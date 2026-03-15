@@ -1,13 +1,13 @@
 { config, pkgs, ... }:
 let
-  panelBg = "rgba(58, 42, 24, 0.88)";
+  panelBg = "rgba(58, 42, 24, 0.45)";
   panelBgSolid = "#3a2a18";
   panelBgLight = "#4a3828";
   panelBorder = "rgba(160, 130, 80, 0.3)";
   panelBorderTop = "rgba(190, 165, 115, 0.25)";
   panelBorderBottom = "rgba(30, 20, 10, 0.5)";
-  panelShadow = "0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3)";
-  panelRadius = "8px";
+  panelShadow = "0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(200, 176, 120, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.2)";
+  panelRadius = "6px";
 
   goldBright = "#dac48a";
   goldMid = "#c8b078";
@@ -15,7 +15,6 @@ let
   goldDimAlpha = "rgba(139, 115, 85, 0.4)";
   textShadow = "0 1px 2px rgba(0, 0, 0, 0.5)";
 
-  activeBg = "linear-gradient(to bottom, rgba(180, 155, 105, 0.2), rgba(100, 75, 40, 0.15))";
   hoverBg = "rgba(160, 130, 80, 0.12)";
   urgentAccent = "#b87a3d";
 in
@@ -28,21 +27,22 @@ in
     layer = "overlay";
     control-center-layer = "top";
     cssPriority = "application";
-    notification-icon-size = 48;
+    notification-icon-size = 42;
     notification-body-image-height = 80;
     notification-body-image-width = 200;
-    timeout = 8;
-    timeout-low = 4;
+    timeout = 6;
+    timeout-low = 3;
     timeout-critical = 0;
     fit-to-screen = false;
-    control-center-width = 380;
-    control-center-height = 600;
-    notification-window-width = 380;
+    control-center-width = 360;
+    control-center-height = 560;
+    notification-window-width = 360;
     keyboard-shortcuts = true;
     image-visibility = "when-available";
     transition-time = 200;
     hide-on-clear = true;
     hide-on-action = true;
+    notification-visibility = {};
     widgets = [
       "title"
       "dnd"
@@ -52,7 +52,7 @@ in
       title = {
         text = "Notifications";
         clear-all-button = true;
-        button-text = "Dismiss";
+        button-text = "Dismiss All";
       };
       dnd = {
         text = "Do Not Disturb";
@@ -64,6 +64,7 @@ in
     * {
       font-family: "Cinzel", serif;
       font-size: 13px;
+      color: ${goldMid};
     }
 
     .control-center {
@@ -75,13 +76,12 @@ in
       margin: 8px;
       padding: 12px;
       box-shadow: ${panelShadow};
-      color: ${goldMid};
     }
 
     .control-center .widget-title {
       color: ${goldBright};
       font-weight: 700;
-      font-size: 15px;
+      font-size: 14px;
       letter-spacing: 2px;
       text-shadow: ${textShadow};
       margin: 4px 8px 8px 8px;
@@ -90,7 +90,7 @@ in
     }
 
     .control-center .widget-title > button {
-      background: ${panelBgLight};
+      background: rgba(58, 42, 24, 0.55);
       border: 1px solid ${panelBorder};
       border-top: 1px solid ${panelBorderTop};
       border-bottom: 1px solid ${panelBorderBottom};
@@ -104,12 +104,11 @@ in
     }
 
     .control-center .widget-title > button:hover {
-      background: ${hoverBg};
+      background: rgba(180, 155, 105, 0.2);
       color: ${goldBright};
     }
 
     .widget-dnd {
-      color: ${goldMid};
       font-size: 12px;
       letter-spacing: 0.5px;
       margin: 4px 8px;
@@ -118,7 +117,7 @@ in
     }
 
     .widget-dnd > switch {
-      background: ${panelBgLight};
+      background: rgba(58, 42, 24, 0.55);
       border: 1px solid ${panelBorder};
       border-radius: 12px;
       box-shadow: inset 0 1px 0 rgba(200, 176, 120, 0.08);
@@ -145,17 +144,31 @@ in
       margin: 4px 0;
     }
 
+    .notification-row .notification-background .close-button {
+      background: rgba(58, 42, 24, 0.55);
+      color: ${goldDim};
+      border: 1px solid ${panelBorder};
+      border-radius: 50%;
+      min-width: 24px;
+      min-height: 24px;
+      margin: 6px;
+      padding: 0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .notification-row .notification-background .close-button:hover {
+      background: rgba(180, 155, 105, 0.25);
+      color: ${goldBright};
+    }
+
     .notification {
-      background: ${panelBgLight};
+      background: rgba(58, 42, 24, 0.45);
       border: 1px solid ${panelBorder};
       border-top: 1px solid ${panelBorderTop};
       border-bottom: 1px solid ${panelBorderBottom};
-      border-radius: 6px;
+      border-radius: ${panelRadius};
       padding: 0;
-      box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(200, 176, 120, 0.1),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+      box-shadow: ${panelShadow};
     }
 
     .notification .notification-content {
@@ -173,7 +186,6 @@ in
     .notification .body {
       color: ${goldMid};
       font-size: 11px;
-      font-family: "Cinzel", serif;
     }
 
     .notification .time {
@@ -189,10 +201,10 @@ in
     }
 
     .notification.critical {
-      border-color: rgba(184, 122, 61, 0.5);
+      border-color: rgba(184, 122, 61, 0.4);
       box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.25),
-        0 0 12px rgba(184, 122, 61, 0.15),
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 12px rgba(184, 122, 61, 0.12),
         inset 0 1px 0 rgba(200, 176, 120, 0.1);
     }
 
@@ -200,24 +212,8 @@ in
       color: ${urgentAccent};
     }
 
-    .close-button {
-      background: transparent;
-      color: ${goldDim};
-      border: none;
-      border-radius: 50%;
-      min-width: 22px;
-      min-height: 22px;
-      margin: 6px;
-      padding: 0;
-    }
-
-    .close-button:hover {
-      background: rgba(160, 130, 80, 0.2);
-      color: ${goldBright};
-    }
-
     .notification .notification-action {
-      background: ${panelBgSolid};
+      background: rgba(58, 42, 24, 0.55);
       border: 1px solid ${panelBorder};
       border-top: 1px solid ${panelBorderTop};
       border-bottom: 1px solid ${panelBorderBottom};
@@ -231,7 +227,7 @@ in
     }
 
     .notification .notification-action:hover {
-      background: ${hoverBg};
+      background: rgba(180, 155, 105, 0.2);
       color: ${goldBright};
     }
 

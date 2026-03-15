@@ -14,10 +14,7 @@ let
 
     installPhase = ''
       mkdir -p $out
-      # Find the directory containing theme.txt, wherever it is
       THEME_ROOT=$(find . -name "theme.txt" -exec dirname {} \;)
-      
-      # Copy everything from that directory into the output
       cp -r $THEME_ROOT/* $out/
     '';
   };

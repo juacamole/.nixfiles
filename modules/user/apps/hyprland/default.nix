@@ -4,6 +4,7 @@
     ./settings.nix
     ./binds.nix
     ./rules.nix
+	./hyprlock.nix
   ];
 
   wayland.windowManager.hyprland = {
@@ -11,15 +12,16 @@
     xwayland.enable = true;
 
     settings = {
+	source = [ "~/.config/hypr/monitors.conf" ];
       # Autostart
       exec-once = [
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        "qs"
         "swww img $(find ~/Pictures/wallpapers -type f | shuf -n 1) --transition-type outer --transition-pos 0.85,0.85"
         "swww-daemon"
         "~/bash/tanatos/tanatos.sh"
-				"hypridle"
-				"swaync"
+		"hypridle"
+		"swaync"
+		"waybar"
       ];
 
       # Environment

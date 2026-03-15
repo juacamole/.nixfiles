@@ -16,6 +16,7 @@
       url = "github:aznhe21/actions-preview.nvim";
       flake = false;
     };
+	gazelle.url = "github:Zeus-Deus/gazelle-tui";
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: 

@@ -5,12 +5,11 @@
     servers = {
       nixd.enable = true;      
       lua_ls.enable = true;    
-    };
-    
-    keymaps.lspBuf = {
-      "gd" = "definition";
-      "K" = "hover";
-      "<leader>cr" = "rename";
+      rust_analyzer = {
+        enable = true;
+        installCargo = false;
+        installRustc = false;
+      };
     };
   };
 
@@ -22,5 +21,6 @@
   home.packages = with pkgs; [
     nixd
     lua-language-server
+    nil 
   ];
 }

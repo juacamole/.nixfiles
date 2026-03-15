@@ -20,6 +20,7 @@
       crun = "cargo run";
       battery = "cat /sys/class/power_supply/BAT1/capacity";
       gemini = "npx https://github.com/google-gemini/gemini-cli";
+	  impostor = "find . -maxdepth 3 -not -type l";
     };
 
     # Environment Variables
@@ -51,6 +52,8 @@
         typeset -g POWERLEVEL9K_DIR_FOREGROUND='#D053A1'
         typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='#D053A1'
         typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='#D053A1'
+ 		typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+		typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 
         export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
       ''

@@ -9,6 +9,10 @@
 	inputs.nixvim.homeModules.nixvim
 	./apps/nvim/default.nix
 	./apps/rofi.nix
+	./apps/gazelle.nix
+	./apps/claude.nix
+	./apps/waybar.nix
+	./apps/p10k.nix
   ];
 
   home.username = "kuan";

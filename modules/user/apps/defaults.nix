@@ -6,6 +6,7 @@
 	# Gaming
     steam-run
     scarab 
+	prismlauncher
 
 	# Env
     inputs.zen-browser.packages."${pkgs.system}".default
@@ -14,7 +15,16 @@
     fastfetch
     quickshell
     nwg-look
+	mako
+	impala
+	iwd
+	tree
+	yazi
+	obs-studio
 
+	# Useless
+	projectlibre
+	
 	# Coding
     gcc
     nodejs
@@ -22,6 +32,9 @@
     rustup
     unzip
     git
+	openjdk
+	gradle
+	docker
 
 	# nvim stuff
     tree-sitter
@@ -30,15 +43,15 @@
     stylua
 
 	# Hypr stuff
-    hyprlock
     waybar
 	nautilus
 	hyprshot
   	satty
-	pkgs.swaynotificationcenter
   	wl-clipboard
     pavucontrol
     rofi
     swww
+	nwg-look
+    nwg-displays
   ];
 }

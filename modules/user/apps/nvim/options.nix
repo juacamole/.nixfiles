@@ -1,21 +1,31 @@
 {
   programs.nixvim = {
     globals.editorconfig = true;
+
     opts = {
       spell = true;
       spelllang = [ "en_us" ];
       title = true;
       titlestring = "NixVim";
+      
       expandtab = false;
       shiftwidth = 4;
       tabstop = 4;
-	  number = true;
-	  relativenumber = true;
+
+      number = true;        
+      relativenumber = true;
+      cursorline = true;   
+      scrolloff = 10;     
+
+      clipboard = "unnamedplus";
     };
+
     autoCmd = [{
       event = [ "FileType" ];
       pattern = [ "*" ];
-      callback = { __raw = "function() vim.opt_local.expandtab = false end"; };
+      callback = { 
+        __raw = "function() vim.opt_local.expandtab = false end"; 
+      };
     }];
   };
 }

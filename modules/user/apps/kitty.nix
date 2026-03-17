@@ -30,6 +30,10 @@ in
       name = "JetBrainsMono Nerd Font";
       size = 13;
     };
+	keybindings = {
+   	  "shift+ctrl+l" = "next_tab";
+      "shift+ctrl+h" = "previous_tab";
+  	};
     settings = {
       background_opacity = "0.82";
       background_blur = 24;

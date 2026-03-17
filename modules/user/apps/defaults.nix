@@ -35,6 +35,7 @@
 	openjdk
 	gradle
 	docker
+	lazygit
 
 	# nvim stuff
     tree-sitter

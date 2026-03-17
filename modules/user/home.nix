@@ -13,6 +13,8 @@
 	./apps/claude.nix
 	./apps/waybar.nix
 	./apps/cursor.nix
+	./apps/notifications.nix
+	./apps/ssh.nix
   ];
 
   home.username = "kuan";

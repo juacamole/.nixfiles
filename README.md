@@ -21,7 +21,7 @@ NixOS configuration for `kuan` — Hyprland on Wayland, Nvidia (PRIME offload), 
 ├── flake.lock                       # Pinned dependency versions
 │
 ├── hosts/
-│   └── nixos/
+│   └── pommes/                      # Laptop Host 
 │       ├── configuration.nix        # Core system config (users, networking, nvidia, steam)
 │       ├── grub.nix                 # GRUB bootloader config
 │       └── hardware-configuration.nix

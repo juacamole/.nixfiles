@@ -22,14 +22,15 @@
   outputs = { self, nixpkgs, home-manager, ... }@inputs: 
   let
     username = "kuan";
-    system = "x86_64-linux"; 
+    system = "x86_64-linux";
+	hostname = "pommes";
   in {
     nixosConfigurations.main = nixpkgs.lib.nixosSystem {
       specialArgs = { inherit inputs username; }; 
       modules = [
         { nixpkgs.hostPlatform = system; }
 
-        ./hosts/nixos/configuration.nix
+        ./hosts/${hostname}/configuration.nix
         home-manager.nixosModules.home-manager {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;

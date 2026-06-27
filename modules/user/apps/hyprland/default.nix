@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, hostKind, ... }: {
   imports = [
     ./monitors.nix
     ./settings.nix
@@ -27,9 +27,11 @@
       # Environment
       env = [
         "XDG_SESSION_TYPE, wayland"
+      ] ++ lib.optionals (hostKind == "nvidia") [
         "LIBVA_DRIVER_NAME, nvidia"
         "GBM_BACKEND, nvidia-drm"
         "__GLX_VENDOR_LIBRARY_NAME, nvidia"
+      ] ++ [
         "ELECTRON_OZONE_PLATFORM_HINT, auto"
       ];
 

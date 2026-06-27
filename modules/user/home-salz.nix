@@ -1,5 +1,11 @@
 { pkgs, inputs, username, ... }: {
 
+  # Mac (salz) home entry. Mirrors home.nix but drops:
+  #   - orbitty (x86-only local pkg)
+  #   - the nvidia GPU session variables
+  # Per-package stripping (gaming, nbfc-linux) and per-host tweaks
+  # (monitors, battery, hyprland env) are handled inside the shared app
+  # modules, gated on hostKind == "mac".
   imports = [
     ./apps/kitty.nix
     ./apps/hyprland/default.nix
@@ -16,7 +22,6 @@
 	./apps/notifications.nix
 	./apps/battery.nix
 	./apps/ssh.nix
-	./apps/orbitty
   ];
 
   home.username = username;
@@ -25,11 +30,6 @@
   home.sessionVariables = {
     STEAM_EXTRA_COMPAT_RUNTIME_PATHS = "/home/${username}/.steam/root/compatibilitytools.d";
     _JAVA_AWT_WM_NONREPARENTING = "1";
-
-    LIBVA_DRIVER_NAME = "nvidia";
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    WLR_NO_HARDWARE_CURSORS = "1";
 
     NPM_CONFIG_PREFIX = "/home/${username}/.npm-global";
   };

@@ -1,0 +1,4 @@
+
+# Never commit extracted Asahi peripheral firmware (per-machine, public repo)
+hosts/salz/firmware/
+/boot/asahi

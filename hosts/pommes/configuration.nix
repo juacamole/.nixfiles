@@ -23,6 +23,19 @@
 
   # nvidia graphic config
   hardware.graphics.enable = true;
+  hardware.graphics.enable32Bit = true;
+
+  # Unmute internal HDA on this Acer (relocated from shared audio.nix).
+  systemd.services.unmute-headphone = {
+    description = "Unmute ALSA Headphone switch on internal HDA";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "sound.target" "pipewire.service" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      ${pkgs.alsa-utils}/bin/amixer -c 0 sset Master unmute 80%
+      ${pkgs.alsa-utils}/bin/amixer -c 0 sset Headphone unmute 80%
+    '';
+  };
 
   hardware.nvidia = {
     modesetting.enable = true;

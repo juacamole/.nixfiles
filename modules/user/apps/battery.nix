@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
+{ config, pkgs, hostKind, ... }:
 let
-  battery = "BAT1";
+  # TODO(salz): confirm the Mac battery name from /sys/class/power_supply
+  # (Asahi commonly exposes "macsmc-battery").
+  battery = if hostKind == "mac" then "macsmc-battery" else "BAT1";
   lowThreshold = 20;
   criticalThreshold = 10;
 

@@ -7,8 +7,6 @@
     nerd-fonts.jetbrains-mono
   ];
 
-  hardware.graphics.enable32Bit = true;
-
   programs.hyprland.enable = true;
 
   xdg.portal = {

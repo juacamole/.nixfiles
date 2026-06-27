@@ -1,4 +1,4 @@
-{ pkgs, config, lib, ... }:
+{ pkgs, config, lib, flakeTarget, ... }:
 let
   gold = "#c8b078";
   goldBright = "#dac48a";
@@ -15,7 +15,7 @@ in
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     shellAliases = {
-      nix-switch = "sudo nixos-rebuild switch --flake ~/.nixfiles#main";
+      nix-switch = "sudo nixos-rebuild switch --flake ~/.nixfiles#${flakeTarget}";
       nix-init = "printf 'use flake' > .envrc && direnv allow";
       kys = "shutdown now";
       vim = "nvim";

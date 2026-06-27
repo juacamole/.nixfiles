@@ -14,10 +14,12 @@ in {
       scarab
       prismlauncher
     ]
+    ++ lib.optionals isDesktop [
+      discord-ptb
+    ]
     ++ [
       # Env
       inputs.zen-browser.packages."${pkgs.system}".default
-      discord-ptb
       firefox
       fastfetch
       quickshell

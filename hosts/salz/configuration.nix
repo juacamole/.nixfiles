@@ -15,7 +15,13 @@
   # Peripheral firmware (Wi-Fi/BT calibration) is read from /boot/asahi at
   # build time. This is per-machine data extracted from macOS and is NEVER
   # committed to this public repo. Builds therefore require `--impure`.
+  #
+  # The path is set explicitly here instead of relying on the module's
+  # `lib.findFirst` default, which uses `builtins.pathExists` and silently
+  # returns `null` under pure evaluation, tripping a confusing assertion
+  # ("firmware location appears incorrect") even when /boot/asahi is present.
   hardware.asahi.extractPeripheralFirmware = true;
+  hardware.asahi.peripheralFirmwareDirectory = /boot/asahi;
 
   # Basic System Settings
   networking.hostName = "salz";

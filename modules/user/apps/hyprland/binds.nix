@@ -1,23 +1,23 @@
-{ pkgs, ... }: 
+{ pkgs, ... }:
 let
   mainMod = "SUPER";
   terminal = "kitty";
   fileManager = "nautilus";
-  menu = "rofi -show run";
+  menu = "qsctl launcher toggle";
 in {
   wayland.windowManager.hyprland.settings = {
     bind = [
-      "${mainMod} SHIFT, B, exec, ~/.config/hypr/scripts/waybar-launch.sh"
       "${mainMod}, RETURN, exec, ${terminal}"
       "${mainMod}, Q, killactive,"
       "${mainMod} SHIFT, M, exec, hyprlock"
       "${mainMod}, E, exec, ${fileManager}"
       "${mainMod}, V, togglefloating,"
       "${mainMod}, SPACE, exec, ${menu}"
+      "${mainMod} ALT, C, exec, qsctl clock toggle"
       "${mainMod}, F, fullscreen,"
       "${mainMod}, Z, exec, zen-beta"
-      "${mainMod}, P, pseudo," 
-      "${mainMod}, I, togglesplit," 
+      "${mainMod}, P, pseudo,"
+      "${mainMod}, I, togglesplit,"
       "${mainMod}, Tab, changegroupactive, f"
 
 			# Screenshot

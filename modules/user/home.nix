@@ -11,24 +11,32 @@
 	./apps/rofi.nix
 	./apps/gazelle.nix
 	./apps/claude.nix
-	./apps/waybar.nix
+	./apps/quickshell.nix
 	./apps/cursor.nix
 	./apps/notifications.nix
+	./apps/battery.nix
 	./apps/ssh.nix
+	./apps/orbitty
   ];
 
-  home.username = "kuan";
-  home.homeDirectory = "/home/kuan";
+  home.username = username;
+  home.homeDirectory = "/home/${username}";
 
   home.sessionVariables = {
-    STEAM_EXTRA_COMPAT_RUNTIME_PATHS = "/home/kuan/.steam/root/compatibilitytools.d";
+    STEAM_EXTRA_COMPAT_RUNTIME_PATHS = "/home/${username}/.steam/root/compatibilitytools.d";
     _JAVA_AWT_WM_NONREPARENTING = "1";
-    
+
     LIBVA_DRIVER_NAME = "nvidia";
     GBM_BACKEND = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     WLR_NO_HARDWARE_CURSORS = "1";
+
+    NPM_CONFIG_PREFIX = "/home/${username}/.npm-global";
   };
+
+  home.sessionPath = [
+    "/home/${username}/.npm-global/bin"
+  ];
 
   programs.zsh.enable = true;
 

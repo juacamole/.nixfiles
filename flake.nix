@@ -25,6 +25,13 @@
     system = "x86_64-linux";
 	hostname = "pommes";
   in {
+    templates = {
+      rust    = { path = ./templates/rust;    description = "Rust dev shell"; };
+      cpp     = { path = ./templates/cpp;     description = "C++ dev shell"; };
+      generic = { path = ./templates/generic; description = "Generic dev shell"; };
+      default = self.templates.generic;
+    };
+
     nixosConfigurations.main = nixpkgs.lib.nixosSystem {
       specialArgs = { inherit inputs username; }; 
       modules = [

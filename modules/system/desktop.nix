@@ -1,30 +1,14 @@
 { pkgs, ... }: {
-  hardware.graphics.enable = true;
+  # xserver still needed for xkb settings and nvidia driver loading
   services.xserver.enable = true;
+  services.tailscale.enable = true;
 
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
   ];
 
-  services.displayManager = {
-    sddm = {
-      enable = true;
-      wayland.enable = true;
-    };
-    defaultSession = "hyprland";
-  };
+  hardware.graphics.enable32Bit = true;
 
-  hardware.graphics = {
-    enable32Bit = true; 
-  };
-
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-    dedicatedServer.openFirewall = true;
-  };
-
-  services.desktopManager.plasma6.enable = true;
   programs.hyprland.enable = true;
 
   xdg.portal = {

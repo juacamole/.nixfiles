@@ -7,6 +7,9 @@
     ./plugins/ui.nix
     ./plugins/explorer.nix
     ./plugins/which-key.nix
+    ./plugins/completion.nix
+    ./plugins/format.nix
+    ./plugins/dap.nix
   ];
 
   programs.nixvim = {

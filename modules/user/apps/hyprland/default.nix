@@ -16,12 +16,12 @@
       # Autostart
       exec-once = [
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        "swww img $(find ~/Pictures/wallpapers -type f | shuf -n 1) --transition-type outer --transition-pos 0.85,0.85"
-        "swww-daemon"
+        "awww-daemon"
+        "awww img ~/Pictures/wallpapers/higurama.jpg --transition-type fade"
         "~/bash/tanatos/tanatos.sh"
 		"hypridle"
 		"swaync"
-		"waybar &"
+		"qs -c hiromi -d"
       ];
 
       # Environment

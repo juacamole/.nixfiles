@@ -33,6 +33,7 @@ in
 	keybindings = {
    	  "shift+ctrl+l" = "next_tab";
       "shift+ctrl+h" = "previous_tab";
+      "shift+ctrl+o" = "launch --type=overlay orbitty";
   	};
     settings = {
       background_opacity = "0.82";

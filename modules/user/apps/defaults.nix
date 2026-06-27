@@ -2,57 +2,71 @@
 
   # Apps that don't need special config
   home.packages = with pkgs; [
-	
-	# Gaming
-    steam-run
-    scarab 
-	prismlauncher
 
-	# Env
+    # Gaming
+    steam-run
+    scarab
+    prismlauncher
+
+    # Env
     inputs.zen-browser.packages."${pkgs.system}".default
     discord-ptb
     firefox
     fastfetch
     quickshell
     nwg-look
-	mako
-	impala
-	iwd
-	tree
-	yazi
-	obs-studio
+    impala
+    iwd
+    tree
+    yazi
+    obs-studio
+    nbfc-linux
+    krita
+    docker
 
-	# Useless
-	projectlibre
-	
-	# Coding
-    gcc
+    # wacom
+    xf86_input_wacom
+    libwacom
+
+    # Useless
+    projectlibre
+
+    # Coding
+	lazysql
+    (lib.hiPrio gcc)
+	maven
     nodejs
-    rustc
     rustup
     unzip
     git
-	openjdk
-	gradle
-	docker
-	lazygit
+	git-lfs
+	jujutsu
+	jjui
+    openjdk
+    gradle
+    lazygit
+	godot
+	# cpp
+	clang_18 cmake ninja
+	clang-tools
+	gdb lldb
+	gnumake
 
-	# nvim stuff
+
+    # nvim stuff
     tree-sitter
     lua-language-server
     nil
     stylua
 
-	# Hypr stuff
-    waybar
-	nautilus
-	hyprshot
-  	satty
-  	wl-clipboard
+    # Hypr stuff
+    nautilus
+    hyprshot
+    satty
+    wl-clipboard
     pavucontrol
     rofi
     swww
-	nwg-look
     nwg-displays
   ];
 }

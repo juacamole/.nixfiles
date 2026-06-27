@@ -1,4 +1,4 @@
-{ config, pkgs, ... }: {
+{ config, pkgs, username, ... }: {
   imports = [ 
     ./hardware-configuration.nix
     ./grub.nix
@@ -8,7 +8,7 @@
   ];
 
   # Basic System Settings
-  networking.hostName = "nixos";
+  networking.hostName = "pommes";
   networking.networkmanager.enable = true;
   time.timeZone = "Europe/Zurich";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -59,7 +59,7 @@
   settings = {
     default_session = {
       command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd start-hyprland";
-      user = "kuan";
+      user = username;
         };
       };
    };
@@ -74,9 +74,9 @@
   };
 
   # User Definition
-  users.users.kuan = {
+  users.users.${username} = {
     isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" "video" "render" ]; 
+    extraGroups = [ "networkmanager" "wheel" "video" "render" "docker" ];
     shell = pkgs.zsh;
   };
 
@@ -89,6 +89,18 @@
   
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
+
+  virtualisation.docker.enable = true;
+
+  # Allow running unpatched dynamic binaries (npm packages, etc.)
+  programs.nix-ld.enable = true;
+
+  # Use patched system GLFW/OpenAL for PrismLauncher (fixes broken LWJGL GLFW)
+  environment.sessionVariables = {
+    PRISMLAUNCHER_USE_SYSTEM_GLFW = "1";
+    PRISMLAUNCHER_USE_SYSTEM_OPENAL = "1";
+  };
 
   system.stateVersion = "25.11";
 }

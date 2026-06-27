@@ -20,6 +20,10 @@
       	  group = "Buffer";
     	}
 		{
+		  __unkeyed-1 = "<leader>d";
+		  group = "Debug";
+		}
+		{
 		  __unkeyed-1 = "g";
 		  desc = "Goto";
 		}

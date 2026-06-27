@@ -37,6 +37,16 @@ in
     };
     initContent = ''
       export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+
+      kmake() {
+        if [ -z "$2" ]; then
+          echo "usage: kmake <rust|cpp|generic> <dir>"; return 1
+        fi
+        nix flake new -t ~/.nixfiles#"$1" "$2" || return
+        cd "$2" || return
+        git init -q && git add -A
+        direnv allow
+      }
     '';
   };
 

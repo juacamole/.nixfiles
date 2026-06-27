@@ -56,6 +56,16 @@
     { mode = "n"; key = "<C-l>"; action = "<C-w>l"; }
     { mode = "n"; key = "<leader>uh"; action = "<cmd>nohlsearch<cr>"; options.desc = "No Highlight"; }
 
+    # --- Debug (DAP) ---
+    { mode = "n"; key = "<leader>db"; action = "<cmd>lua require('dap').toggle_breakpoint()<cr>"; options.desc = "Toggle Breakpoint"; }
+    { mode = "n"; key = "<leader>dc"; action = "<cmd>lua require('dap').continue()<cr>"; options.desc = "Continue / Start"; }
+    { mode = "n"; key = "<leader>di"; action = "<cmd>lua require('dap').step_into()<cr>"; options.desc = "Step Into"; }
+    { mode = "n"; key = "<leader>do"; action = "<cmd>lua require('dap').step_over()<cr>"; options.desc = "Step Over"; }
+    { mode = "n"; key = "<leader>dO"; action = "<cmd>lua require('dap').step_out()<cr>"; options.desc = "Step Out"; }
+    { mode = "n"; key = "<leader>dr"; action = "<cmd>lua require('dap').repl.toggle()<cr>"; options.desc = "Toggle REPL"; }
+    { mode = "n"; key = "<leader>dt"; action = "<cmd>lua require('dap').terminate()<cr>"; options.desc = "Terminate"; }
+    { mode = "n"; key = "<leader>du"; action = "<cmd>lua require('dapui').toggle()<cr>"; options.desc = "Toggle UI"; }
+
 	# --- added cuz cool ---
 	{ mode = "n"; key = "ö"; action = ":"; }
   ];

@@ -21,6 +21,10 @@ NixOS configuration for `kuan` — Hyprland on Wayland, Nvidia (PRIME offload), 
 ├── flake.lock                       # Pinned dependency versions
 │
 ├── hosts/
+|   ├── salz/
+|   |   ├── configuration.nix        # Core system config (users, networking, nvidia, steam)
+│   |   ├── grub.nix                 # GRUB bootloader config
+│   |   └── hardware-configuration.nix
 │   └── pommes/                      # Laptop Host 
 │       ├── configuration.nix        # Core system config (users, networking, nvidia, steam)
 │       ├── grub.nix                 # GRUB bootloader config
@@ -34,6 +38,7 @@ NixOS configuration for `kuan` — Hyprland on Wayland, Nvidia (PRIME offload), 
     │
     └── user/                        # Home Manager modules
         ├── home.nix                 # HM entry point — imports all apps, session vars
+        ├── home-salz.nix            # HM entry point for my salz laptop   
         └── apps/
             ├── defaults.nix         # Base packages (dev tools, gaming, utilities)
             ├── kitty.nix

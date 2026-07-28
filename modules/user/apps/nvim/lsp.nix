@@ -19,7 +19,7 @@
     };
   };
 
-  programs.nixvim.diagnostics = {
+  programs.nixvim.diagnostic.settings = {
     virtual_text = true;
     underline = true;
   };

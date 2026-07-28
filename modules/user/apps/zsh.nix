@@ -15,7 +15,7 @@ in
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     shellAliases = {
-      nix-switch = "sudo nixos-rebuild switch --flake ~/.nixfiles#${flakeTarget}";
+      nix-switch = "sudo nixos-rebuild switch --impure --flake ~/.nixfiles#${flakeTarget}";
       nix-init = "printf 'use flake' > .envrc && direnv allow";
       kys = "shutdown now";
       vim = "nvim";
@@ -36,6 +36,9 @@ in
       CAPACITOR_ANDROID_STUDIO_PATH = "/opt/android-studio/bin/studio.sh";
     };
     initContent = ''
+	  if [[ -r $HOME/.claude/oauth-token ]]; then                                                                                                                      
+   		 export CLAUDE_CODE_OAUTH_TOKEN="$(<$HOME/.claude/oauth-token)"                                                                                                 
+	  fi  
       export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 
       kmake() {

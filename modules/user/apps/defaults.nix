@@ -12,7 +12,6 @@ in {
       # Gaming
       steam-run
       scarab
-      prismlauncher
     ]
     ++ lib.optionals isDesktop [
       discord-ptb
@@ -41,8 +40,17 @@ in {
       xf86_input_wacom
       libwacom
 
+	  # bored
+	  ani-cli
+
       # Useless
       projectlibre
+
+	  # gaming 2
+      prismlauncher
+	  vesktop
+
+
 
       # Coding
 	  lazysql
@@ -73,13 +81,13 @@ in {
       stylua
 
       # Hypr stuff
+	  brightnessctl
       nautilus
       hyprshot
       satty
       wl-clipboard
       pavucontrol
-      rofi
-      swww
+      awww
       nwg-displays
     ];
 }

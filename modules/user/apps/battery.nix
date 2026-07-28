@@ -27,43 +27,43 @@ let
       exit 0
     fi
 
-    # Detect focused/fullscreen window via hyprctl. When user busy in app
-    # (any fullscreen mode), suppress floating popup — notification still
-    # lands in swaync notification center for later via DnD toggle.
+    # Detect focused/fullscreen window via hyprctl. When the user is in a
+    # fullscreen app (likely gaming), skip the toast — the QS notification
+    # center will still hold the missed message via its history.
     focused=0
     if command -v hyprctl >/dev/null 2>&1; then
       fs=$(hyprctl activewindow -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.fullscreen // 0' 2>/dev/null || echo 0)
       [ "$fs" != "0" ] && [ "$fs" != "null" ] && focused=1
     fi
 
+    # If battery-saver mode is installed and currently off, we attach a
+    # "toggle-saver" action to the low notification so the user can enable
+    # saver directly from the toast. The QS Notifications card renders the
+    # action button and handles the click locally (Quickshell.Io Process),
+    # so it doesn't matter that notify-send exits before the DBus
+    # ActionInvoked round-trip.
+    extra_args=()
+    if command -v battery-saver >/dev/null 2>&1 \
+       && [ "$(battery-saver status 2>/dev/null)" = "off" ]; then
+      extra_args+=("--action=toggle-saver=Enable battery saver")
+    fi
+
     notify() {
-      if [ "$focused" = "1" ] && command -v swaync-client >/dev/null 2>&1; then
-        # Push silently into notification center, no floating popup.
-        was_dnd=$(${pkgs.swaynotificationcenter}/bin/swaync-client --get-dnd 2>/dev/null || echo false)
-        ${pkgs.swaynotificationcenter}/bin/swaync-client --dnd-on >/dev/null 2>&1 || true
-        ${pkgs.libnotify}/bin/notify-send \
-          --app-name=battery \
-          --urgency="$1" \
-          --icon=battery-caution \
-          --hint=string:category:device.battery \
-          "$2" "$3"
-        sleep 1
-        [ "$was_dnd" = "true" ] || ${pkgs.swaynotificationcenter}/bin/swaync-client --dnd-off >/dev/null 2>&1 || true
-      else
-        ${pkgs.libnotify}/bin/notify-send \
-          --app-name=battery \
-          --urgency="$1" \
-          --icon=battery-caution \
-          --hint=string:category:device.battery \
-          "$2" "$3"
-      fi
+      [ "$focused" = "1" ] && return 0
+      ${pkgs.libnotify}/bin/notify-send \
+        --app-name=battery \
+        --urgency="$1" \
+        --icon=battery-caution \
+        --hint=string:category:device.battery \
+        "''${extra_args[@]-}" \
+        "$2" "$3"
     }
 
     if [ "$capacity" -le ${toString criticalThreshold} ] && [ "$last" != "critical" ]; then
       notify normal "Battery critical" "$capacity% remaining — plug in soon."
       echo critical > "$state_file"
     elif [ "$capacity" -le ${toString lowThreshold} ] && [ "$last" != "low" ] && [ "$last" != "critical" ]; then
-      notify low "Battery low" "$capacity% remaining."
+      notify low "Battery low" "$capacity% remaining. Enable saver?"
       echo low > "$state_file"
     fi
   '';

@@ -2,8 +2,10 @@
   imports = [
     ./hardware-configuration.nix
     ./boot.nix
+    ./asahi-nvram.nix
     ../../modules/system/desktop.nix
     ../../modules/system/audio.nix
+    ../../modules/system/steam-muvm.nix
   ];
 
   # Asahi kernel / firmware / hardware support is provided by the
@@ -12,16 +14,17 @@
   # override boot.kernelPackages anywhere for this host.
   hardware.asahi.enable = true;
 
-  # Peripheral firmware (Wi-Fi/BT calibration) is read from /boot/asahi at
-  # build time. This is per-machine data extracted from macOS and is NEVER
-  # committed to this public repo. Builds therefore require `--impure`.
+  # Peripheral firmware (Wi-Fi/BT calibration) is loaded from
+  # /boot/vendorfw/firmware.cpio at build time. This is per-machine data
+  # placed there by the Asahi installer and is NEVER committed to this public
+  # repo. Builds therefore require `--impure`.
   #
-  # The path is set explicitly here instead of relying on the module's
+  # The path is set explicitly instead of relying on the module's
   # `lib.findFirst` default, which uses `builtins.pathExists` and silently
   # returns `null` under pure evaluation, tripping a confusing assertion
-  # ("firmware location appears incorrect") even when /boot/asahi is present.
+  # ("firmware location appears incorrect") even when the file is present.
   hardware.asahi.extractPeripheralFirmware = true;
-  hardware.asahi.peripheralFirmwareDirectory = /boot/asahi;
+  hardware.asahi.peripheralFirmwareDirectory = /boot/vendorfw;
 
   # Basic System Settings
   networking.hostName = "salz";

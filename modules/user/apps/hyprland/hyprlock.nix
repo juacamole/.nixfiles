@@ -30,7 +30,7 @@ in
       background = [
         {
           monitor = "";
-          path = "~/Pictures/wallpapers/parchment.png";
+          path = "~/Pictures/wallpaper/wallpaper.png";
           blur_passes = 4;
           blur_size = 6;
           brightness = 0.7;

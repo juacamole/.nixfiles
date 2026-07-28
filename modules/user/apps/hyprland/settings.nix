@@ -1,10 +1,8 @@
 { ... }:
 let
-  goldBright = "dac48aff";
-  goldMid = "c8b078ff";
-  goldDim = "8b7355ff";
-  panelBg = "3a2a18ff";
-  inactive = "4a3828ff";
+  activeWhite = "f5f5f5ff";
+  activeGray = "c8c8c8ff";
+  inactiveGray = "4a4a4aff";
 in
 {
   wayland.windowManager.hyprland.settings = {
@@ -33,7 +31,7 @@ in
       ];
     };
     decoration = {
-      rounding = 0;
+      rounding = 10;
       active_opacity = 1.0;
       inactive_opacity = 1.0;
       blur = {
@@ -43,11 +41,11 @@ in
       };
     };
     general = {
-      gaps_in = 0;
-      gaps_out = 0;
-      border_size = 1;
-      "col.active_border" = "rgba(${goldBright}) rgba(${goldDim}) 45deg";
-      "col.inactive_border" = "rgba(${inactive})";
+      gaps_in = 4;
+      gaps_out = 8;
+      border_size = 2;
+      "col.active_border" = "rgba(${activeWhite}) rgba(${activeGray}) 45deg";
+      "col.inactive_border" = "rgba(${inactiveGray})";
       layout = "dwindle";
     };
     misc.disable_hyprland_logo = true;

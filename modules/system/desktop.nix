@@ -9,6 +9,9 @@
 
   programs.hyprland.enable = true;
 
+  # UPower DBus service — feeds the QS Battery widget.
+  services.upower.enable = true;
+
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];

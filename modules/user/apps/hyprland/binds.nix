@@ -57,14 +57,15 @@ in {
       "${mainMod}, mouse:273, resizewindow"
     ];
 
-    # Laptop Multimedia Keys
+    # Laptop Multimedia Keys. Each volume/brightness adjust also pokes the QS
+    # OSD via qsctl so the toast pops at the same moment.
     bindel = [
-      ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
-      ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-      ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+      ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+ && qsctl osd volume"
+      ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && qsctl osd volume"
+      ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && qsctl osd volume"
       ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
-      ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
-      ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
+      ", XF86MonBrightnessUp, exec, brightnessctl set 5%+ && qsctl osd brightness"
+      ", XF86MonBrightnessDown, exec, brightnessctl set 5%- && qsctl osd brightness"
     ];
   };
 }

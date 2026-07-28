@@ -1,7 +1,7 @@
 {
   programs.nixvim.plugins.neo-tree = {
     enable = true;
-    filesystem.followCursor = true;
+    filesystem.followCurrentFile.enabled = true;
     settings = {
       enable_git_status = true;
       window.mappings = {

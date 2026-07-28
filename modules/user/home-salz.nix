@@ -14,13 +14,12 @@
 	./apps/hypridle.nix
 	inputs.nixvim.homeModules.nixvim
 	./apps/nvim/default.nix
-	./apps/rofi.nix
 	./apps/gazelle.nix
 	./apps/claude.nix
-	./apps/quickshell.nix
+	./apps/quickshell
 	./apps/cursor.nix
-	./apps/notifications.nix
 	./apps/battery.nix
+	./apps/battery-saver.nix
 	./apps/ssh.nix
   ];
 

@@ -1,4 +1,16 @@
-{ pkgs, lib, hostKind, ... }: {
+{ pkgs, lib, hostKind, ... }:
+let
+  isDesktop = hostKind == "nvidia";
+
+  # `awww img` races `awww-daemon` startup — without waiting for the socket,
+  # the wallpaper command silently no-ops and the screen stays blank.
+  setWallpaper = pkgs.writeShellScript "set-wallpaper" ''
+    ${pkgs.awww}/bin/awww-daemon &
+    until ${pkgs.awww}/bin/awww query >/dev/null 2>&1; do sleep 0.1; done
+    exec ${pkgs.awww}/bin/awww img ~/Pictures/wallpaper/wallpaper.png --transition-type fade
+  '';
+in
+{
   imports = [
     ./monitors.nix
     ./settings.nix
@@ -12,16 +24,18 @@
     xwayland.enable = true;
 
     settings = {
-	source = [ "~/.config/hypr/monitors.conf" ];
-      # Autostart
+	# monitors.conf is a pommes-local override (live-edited outside the
+	# flake). salz monitor config lives declaratively in monitors.nix.
+	source = lib.optionals isDesktop [ "~/.config/hypr/monitors.conf" ];
+      # Autostart. Quickshell ("kuan" config) provides bar, launcher,
+      # notifications, and OSDs on both hosts. tanatos stays pommes-only.
       exec-once = [
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        "awww-daemon"
-        "awww img ~/Pictures/wallpapers/higurama.jpg --transition-type fade"
-        "~/bash/tanatos/tanatos.sh"
+        "${setWallpaper}"
 		"hypridle"
-		"swaync"
-		"qs -c hiromi -d"
+		"qs -c kuan -d"
+      ] ++ lib.optionals isDesktop [
+        "~/bash/tanatos/tanatos.sh"
       ];
 
       # Environment
@@ -35,8 +49,12 @@
         "ELECTRON_OZONE_PLATFORM_HINT, auto"
       ];
 
+      # force_zero_scaling makes Xwayland clients render at 1x (we upscale).
+      # On the muvm/FEX/Asahi stack this collides with Steam CEF's own
+      # -forcedesktopscaling, producing rendering glitches in webhelper
+      # subwindows. Keep it only on the desktop where it's needed.
       xwayland = {
-        force_zero_scaling = true;
+        force_zero_scaling = isDesktop;
       };
     };
   };

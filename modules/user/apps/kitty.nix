@@ -36,9 +36,9 @@ in
       "shift+ctrl+o" = "launch --type=overlay orbitty";
   	};
     settings = {
-      background_opacity = "0.82";
-      background_blur = 24;
-      dynamic_background_opacity = "yes";
+      background_opacity = "1.0";
+      background_blur = 0;
+      dynamic_background_opacity = "no";
       cursor_shape = "beam";
       cursor_trail = 1;
       cursor = fgBright;

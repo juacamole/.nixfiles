@@ -21,7 +21,7 @@ Item {
     Text {
         id: label
         anchors.centerIn: parent
-        text: ""  // nf-fa-leaf (U+F06C)
+        text: "󰌪"  // nf-md-leaf (U+F032A)
         color: Theme.warn
         font.family: Theme.fontMono
         font.pixelSize: Theme.fontSize

@@ -29,10 +29,10 @@ Item {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.muted ? "" // nf-md-volume-mute
-                 : root.volume > 0.66 ? ""
-                 : root.volume > 0.33 ? ""
-                 : ""
+            text: root.muted ? "󰖁" // nf-md-volume-off (U+F0581)
+                 : root.volume > 0.66 ? "󰕾" // nf-md-volume-high (U+F057E)
+                 : root.volume > 0.33 ? "󰖀" // nf-md-volume-medium (U+F0580)
+                 : "󰕿" // nf-md-volume-low (U+F057F)
             color: root.muted ? Theme.faint : Theme.dim
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSize

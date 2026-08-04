@@ -6,6 +6,7 @@
     ../../modules/system/desktop.nix
     ../../modules/system/audio.nix
     ../../modules/system/steam-muvm.nix
+    ../../modules/system/llm.nix
   ];
 
   # Asahi kernel / firmware / hardware support is provided by the

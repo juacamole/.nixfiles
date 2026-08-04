@@ -39,9 +39,13 @@ PanelWindow {
         anchors.fill: parent
         anchors.margins: Theme.barMargin
 
-        Workspaces {
+        RowLayout {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.widgetGap
+
+            Workspaces {}
+            IdleLockToggle {} // idle-lock on/off, just right of workspaces
         }
 
         Clock {

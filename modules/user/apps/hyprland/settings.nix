@@ -18,7 +18,12 @@ in
       name = "epic-mouse-v1";
       sensitivity = -0.5;
     }];
-    cursor.no_hardware_cursors = true;
+    # Software cursors are composited by Hyprland on the GPU, so while ollama
+    # saturates it the pointer itself freezes — the single most "unusable"
+    # symptom. A hardware cursor lives on its own DCP plane and keeps moving
+    # at full rate no matter how backed up the render queue is. Revert to
+    # true if the pointer corrupts or vanishes on Asahi.
+    cursor.no_hardware_cursors = false;
     animations = {
       enabled = true;
       bezier = [ "overshot, 0.13, 0.99, 0.29, 1.1" ];
@@ -50,7 +55,6 @@ in
     };
     misc.disable_hyprland_logo = true;
     dwindle = {
-      pseudotile = true;
       preserve_split = true;
     };
   };

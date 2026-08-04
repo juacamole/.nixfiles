@@ -17,7 +17,7 @@ in {
       "${mainMod}, F, fullscreen,"
       "${mainMod}, Z, exec, zen-beta"
       "${mainMod}, P, pseudo,"
-      "${mainMod}, I, togglesplit,"
+      "${mainMod}, I, layoutmsg, togglesplit"
       "${mainMod}, Tab, changegroupactive, f"
 
 			# Screenshot

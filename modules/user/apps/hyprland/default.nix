@@ -22,6 +22,8 @@ in
   wayland.windowManager.hyprland = {
     enable = true;
     xwayland.enable = true;
+    # Pin the legacy hyprlang generator; Zoko/HM flipped the default to "lua".
+    configType = "hyprlang";
 
     settings = {
 	# monitors.conf is a pommes-local override (live-edited outside the

@@ -28,6 +28,7 @@ in
       crun = "cargo run";
       battery = "cat /sys/class/power_supply/BAT1/capacity";
       gemini = "npx https://github.com/google-gemini/gemini-cli";
+      claude-local = "ccr code"; # Claude Code CLI routed to local ollama (see claude.nix)
       impostor = "find . -maxdepth 3 -not -type l";
     };
     sessionVariables = {

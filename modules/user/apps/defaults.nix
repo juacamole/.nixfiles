@@ -67,6 +67,8 @@ in {
       gradle
       lazygit
 	  godot
+	  opencode
+	  crush
 	  # cpp
 	  clang_18 cmake ninja
 	  clang-tools

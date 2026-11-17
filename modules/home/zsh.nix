@@ -1,4 +1,4 @@
-{ lib, osConfig, ... }:
+{ config, lib, osConfig, ... }:
 let
   p = (import ./palette.nix).inkCream;
 
@@ -21,7 +21,7 @@ in {
     syntaxHighlighting.enable = true;
 
     shellAliases = {
-      nix-switch = "sudo nixos-rebuild switch --impure --flake ~/.nixfiles#${osConfig.networking.hostName}";
+      nix-switch = "nh os switch ${config.home.homeDirectory}/.nixfiles --impure -H ${osConfig.networking.hostName}";
       nix-init = "printf 'use flake' > .envrc && direnv allow";
       claude-local = claudeLocal;
       gemini = "npx https://github.com/google-gemini/gemini-cli";
@@ -56,6 +56,30 @@ in {
         [ -f "$dir/.envrc" ] && direnv allow "$dir"
       }
     '';
+  };
+
+  programs.fzf = {
+    enable = true;
+    historyWidget.zsh.command = "";
+  };
+  programs.zoxide.enable = true;
+  programs.nix-index.enable = true;
+
+  # Atuin owns Ctrl-R; the up arrow stays plain zsh history.
+  programs.atuin = {
+    enable = true;
+    flags = [ "--disable-up-arrow" ];
+  };
+
+  programs.nh = {
+    enable = true;
+    flake = "${config.home.homeDirectory}/.nixfiles";
+  };
+
+  programs.git.enable = true;
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
   };
 
   programs.starship = {

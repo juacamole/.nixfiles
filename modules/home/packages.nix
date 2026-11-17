@@ -31,6 +31,15 @@
     yazi
     glow
     unzip
+    ripgrep
+    fd
+    psmisc
+    btop
+    dust
+    duf
+    lsof
+    watchexec
+    nix-output-monitor
 
     # Dev
     git

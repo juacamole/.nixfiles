@@ -24,6 +24,8 @@
   virtualisation.docker.enable = true;
   # Lets unpatched dynamic binaries (npm packages etc.) run.
   programs.nix-ld.enable = true;
+  # Capability wrapper; bandwhich needs raw sockets.
+  programs.bandwhich.enable = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.gc = {

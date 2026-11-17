@@ -35,7 +35,7 @@ host; the host's `configuration.nix` or `home.nix` sets the difference.
 ## Commands
 
 ```sh
-nix-switch                 # alias: sudo nixos-rebuild switch --impure --flake ~/.nixfiles#<host>
+nix-switch                 # alias: nh os switch ~/.nixfiles --impure -H <host>
 nix eval --impure --raw .#nixosConfigurations.salz.config.system.build.toplevel.drvPath
 nix build --impure --no-link .#nixosConfigurations.salz.config.system.build.toplevel
 nix flake update nixpkgs-claude    # bump only claude-code

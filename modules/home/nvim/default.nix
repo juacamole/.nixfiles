@@ -10,10 +10,14 @@
     ./plugins/format.nix
     ./plugins/dap.nix
     ./plugins/terminal.nix
+    ./plugins/telescope.nix
+    ./plugins/session.nix
   ];
 
   programs.nixvim = {
     enable = true;
+    # Same nixpkgs the flake input follows; stating it silences nixvim's warning.
+    nixpkgs.source = inputs.nixpkgs;
     defaultEditor = true;
     withNodeJs = true;
 

@@ -18,13 +18,27 @@
       scrolloff = 10;
 
       clipboard = "unnamedplus";
+
+      undofile = true;
+      signcolumn = "yes";
+      ignorecase = true;
+      smartcase = true;
+      splitright = true;
+      splitbelow = true;
+      updatetime = 250;
     };
 
-    # Overrides filetype plugins that set expandtab.
-    autoCmd = [{
-      event = [ "FileType" ];
-      pattern = [ "*" ];
-      callback.__raw = "function() vim.opt_local.expandtab = false end";
-    }];
+    autoCmd = [
+      # Overrides filetype plugins that set expandtab.
+      {
+        event = [ "FileType" ];
+        pattern = [ "*" ];
+        callback.__raw = "function() vim.opt_local.expandtab = false end";
+      }
+      {
+        event = [ "TextYankPost" ];
+        callback.__raw = "function() vim.hl.on_yank({ timeout = 200 }) end";
+      }
+    ];
   };
 }

@@ -109,14 +109,24 @@ in {
     '';
 
     plugins = {
-      telescope.enable = true;
-      treesitter.enable = true;
+      treesitter = {
+        enable = true;
+        highlight.enable = true;
+        indent.enable = true;
+      };
+
+      snacks.settings = {
+        indent.enabled = true;
+        words.enabled = true;
+      };
 
       bufferline = {
         enable = true;
         settings.options = {
           separator_style = "thin";
           always_show_bufferline = true;
+          close_command.__raw = "function(n) Snacks.bufdelete(n) end";
+          right_mouse_command.__raw = "function(n) Snacks.bufdelete(n) end";
           offsets = [
             {
               filetype = "neo-tree";

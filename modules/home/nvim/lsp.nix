@@ -70,6 +70,27 @@
     })
   '';
 
+  programs.nixvim.plugins.clangd-extensions.enable = true;
+
+  # Only in buffers clangd is attached to; the commands do not exist elsewhere.
+  programs.nixvim.autoCmd = [{
+    event = [ "LspAttach" ];
+    callback.__raw = ''
+      function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if not client or client.name ~= "clangd" then return end
+        local function map(key, cmd, desc)
+          vim.keymap.set("n", key, "<cmd>" .. cmd .. "<cr>", { buffer = args.buf, desc = desc })
+        end
+        map("<leader>ch", "LspClangdSwitchSourceHeader", "Switch Header/Source")
+        map("<leader>cs", "LspClangdShowSymbolInfo", "Symbol Info")
+        map("<leader>ct", "ClangdTypeHierarchy", "Type Hierarchy")
+        map("<leader>cm", "ClangdMemoryUsage", "clangd Memory Usage")
+        map("<leader>cx", "ClangdAST", "AST")
+      end
+    '';
+  }];
+
   programs.nixvim.diagnostic.settings = {
     virtual_text = true;
     underline = true;

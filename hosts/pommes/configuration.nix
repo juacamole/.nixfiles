@@ -1,31 +1,36 @@
 { config, pkgs, username, ... }: {
-  imports = [ 
+  imports = [
     ./hardware-configuration.nix
-    ./grub.nix
-    ../../modules/system/boot.nix
-    ../../modules/system/desktop.nix
-    ../../modules/system/audio.nix
+    ./boot.nix
+    ../../modules/system
   ];
 
-  # Basic System Settings
   networking.hostName = "pommes";
-  networking.networkmanager.enable = true;
-  time.timeZone = "Europe/Zurich";
-  i18n.defaultLocale = "en_US.UTF-8";
-  
-  services.xserver.xkb = { 
-    layout = "ch"; 
-    variant = ""; 
+
+  services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
   };
-  # load nvidia driver
-  services.xserver.videoDrivers = ["nvidia"]; 
-  console.keyMap = "sg";
+  hardware.nvidia = {
+    modesetting.enable = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = false;
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
 
-  # nvidia graphic config
-  hardware.graphics.enable = true;
-  hardware.graphics.enable32Bit = true;
+    prime = {
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;
+      };
+      intelBusId = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+    };
+  };
 
-  # Unmute internal HDA on this Acer (relocated from shared audio.nix).
+  # The internal HDA card on this Acer comes up muted.
   systemd.services.unmute-headphone = {
     description = "Unmute ALSA Headphone switch on internal HDA";
     wantedBy = [ "multi-user.target" ];
@@ -37,45 +42,13 @@
     '';
   };
 
-  hardware.nvidia = {
-    modesetting.enable = true;
-    powerManagement.enable = false;
-    powerManagement.finegrained = false;
-    open = false; 
-    nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-
-    prime = {
-      offload = {
-        enable = true;
-        enableOffloadCmd = true;
-      };
-      intelBusId = "PCI:0:2:0";    
-      nvidiaBusId = "PCI:1:0:0"; 
-    };
-  };
-
-  # Shell Configuration
-  programs.zsh.enable = true;
-
-  # Steam
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true; 
-    dedicatedServer.openFirewall = true;
-    localNetworkGameTransfers.openFirewall = true;
-  };
-
-  # Login Manager
   services.greetd = {
-  enable = true;
-  settings = {
-    default_session = {
+    enable = true;
+    settings.default_session = {
       command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd start-hyprland";
       user = username;
-        };
-      };
-   };
+    };
+  };
   systemd.services.greetd.serviceConfig = {
     Type = "idle";
     StandardInput = "tty";
@@ -86,34 +59,20 @@
     TTYVTDisallocate = true;
   };
 
-  # User Definition
-  users.users.${username} = {
-    isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" "video" "render" "docker" ];
-    shell = pkgs.zsh;
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
   };
 
-  # Nix Maintenance
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 7d";
-  };
-  
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
-
-  virtualisation.docker.enable = true;
-
-  # Allow running unpatched dynamic binaries (npm packages, etc.)
-  programs.nix-ld.enable = true;
-
-  # Use patched system GLFW/OpenAL for PrismLauncher (fixes broken LWJGL GLFW)
+  # PrismLauncher's bundled LWJGL GLFW is broken here.
   environment.sessionVariables = {
     PRISMLAUNCHER_USE_SYSTEM_GLFW = "1";
     PRISMLAUNCHER_USE_SYSTEM_OPENAL = "1";
   };
+
+  nixpkgs.config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
 
   system.stateVersion = "25.11";
 }

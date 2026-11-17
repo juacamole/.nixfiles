@@ -11,18 +11,8 @@
     in {
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
-            cmake
-            ninja
-            gnumake
-            pkg-config
-            gdb
-            clang-tools
-          ];
-
-          buildInputs = with pkgs; [
-            openssl 
-          ];
+          nativeBuildInputs = with pkgs; [ cmake ninja gnumake pkg-config gdb clang-tools ];
+          buildInputs = with pkgs; [ openssl ];
         };
       });
     };

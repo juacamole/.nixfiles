@@ -1,10 +1,8 @@
 { pkgs, ... }:
 let
-  # Holding Fn+Power for 3 s shuts down; logind ignores a bare power press (configuration.nix).
-  # Without Fn, Power acts as Space, injected through a uinput device.
-  # The two keys live on different evdev devices (SMC vs. SPI keyboard), so
-  # no compositor binding can chord them. Instead watch the SMC device and
-  # read the keyboard's live key state when Power goes down.
+  # Fn+Power held for 3 s powers off; Power alone types Space. The keys sit on
+  # two evdev devices, so no compositor bind can chord them: this watches the
+  # power key and reads the keyboard's live state when it goes down.
   fnPower = pkgs.writers.writePython3 "fn-power" {
     libraries = [ pkgs.python3Packages.evdev ];
   } ''
@@ -14,7 +12,7 @@ let
     import evdev
     from evdev import ecodes
 
-    HOLD = 3.0  # seconds both keys must stay down
+    HOLD = 3.0
 
 
     def find(name):
@@ -35,7 +33,6 @@ let
 
 
     def power_released(timeout):
-        """Wait up to `timeout` for Power to come back up."""
         if not select.select([power], [], [], timeout)[0]:
             return False
         return any(ev.type == ecodes.EV_KEY and ev.code == ecodes.KEY_POWER
@@ -76,6 +73,12 @@ let
   '';
 in {
   hardware.uinput.enable = true;
+
+  # The power button is the Touch ID key next to F12; logind must not act on it.
+  services.logind.settings.Login = {
+    HandlePowerKey = "ignore";
+    HandlePowerKeyLongPress = "ignore";
+  };
 
   systemd.services.fn-power = {
     description = "Power off on Fn+Power, Space on bare Power";

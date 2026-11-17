@@ -1,33 +1,7 @@
 { pkgs, username, ... }:
 let
-  # Ctrl + physical trackpad click = right click, like macOS. Only the
-  # built-in trackpad's click is affected: external mice, and taps (which
-  # libinput synthesises, there is no button event to catch), keep normal
-  # Ctrl+click.
-  #
-  # Ctrl lives on the keyboard and the click on the trackpad, two evdev
-  # devices, so no compositor bind can tell "trackpad click" from "mouse
-  # click". Same approach as fn-power.nix: read the keyboard's live key state
-  # when the button goes down.
-  #
-  # To swallow the left click the trackpad has to be grabbed, so everything
-  # it sends is replayed through a uinput clone. The clone keeps the bus
-  # (spi) and vendor/product IDs, so libinput still applies its Apple
-  # touchpad quirks (palm size, size hint) and disable-while-typing pairing.
-  # The right click itself comes from a separate tiny virtual mouse: the
-  # trackpad is a clickpad, and libinput drops any non-left button event
-  # from a clickpad as a kernel bug.
-  #
-  # Ctrl is still physically held when the right click lands, so apps see
-  # Ctrl+right-click; in practice that opens the normal context menu.
-  #
-  # Toggle, off by default: only while `flag` exists does Ctrl+click become
-  # a right click; otherwise it stays a normal Ctrl+left click.
-  # Checked on every press, so flipping it (Fn+F7, binds.nix) applies
-  # at once; it lives in /var/lib so the choice survives reboots.
-  #
-  # Fn+F4 (binds.nix) keeps working: it inhibits the *physical* device by its
-  # exact name, which silences this daemon's grab and therefore the clone.
+  # Ctrl + physical trackpad click = right click, while this flag exists
+  # (toggled with Fn+F7). Design notes: docs/salz.md.
   flag = "/var/lib/ctrl-click/on";
 
   ctrlClick = pkgs.writers.writePython3 "ctrl-click" {
@@ -77,7 +51,7 @@ let
 
 
     pad.grab()
-    remapped = False  # the current press became a right click
+    remapped = False
     try:
         for ev in pad.read_loop():
             if ev.type == ecodes.EV_KEY and ev.code == ecodes.BTN_LEFT:
@@ -99,7 +73,7 @@ let
 in {
   hardware.uinput.enable = true;
 
-  # User-owned so the Hyprland toggle can create/remove the flag without root.
+  # User-owned so the Hyprland toggle can flip the flag without root.
   systemd.tmpfiles.rules = [ "d /var/lib/ctrl-click 0755 ${username} users -" ];
 
   systemd.services.ctrl-click = {
@@ -108,8 +82,6 @@ in {
     after = [ "systemd-udev-settle.service" ];
     serviceConfig = {
       ExecStart = ctrlClick;
-      # A crash releases the grab, so the trackpad falls back to normal
-      # behaviour until the restart.
       Restart = "always";
       RestartSec = 2;
     };

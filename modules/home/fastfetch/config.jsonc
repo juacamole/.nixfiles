@@ -1,0 +1,34 @@
+// Colours are kitty's ANSI slots: yellow, and 90 (bright black) for the gray.
+// Icons are Nerd Font glyphs from Maple Mono NF.
+{
+  "logo": { "source": "nixos", "color": { "1": "yellow", "2": "90" }, "padding": { "left": 1, "right": 3 } },
+  "display": {
+    "separator": "  ",
+    "color": { "keys": "yellow", "title": "yellow", "output": "default" },
+    "key": { "width": 12 },
+    "bar": { "char": { "elapsed": "━", "total": "━" }, "border": { "left": "", "right": "" }, "width": 12, "color": { "elapsed": "yellow", "total": "90" } },
+    "percent": { "type": ["bar", "num"] }
+  },
+  "modules": [
+    { "type": "title", "format": "{user-name}  {#90}on{#}  {host-name}" },
+    { "type": "custom", "format": "{#90}╭─ system ─────────────" },
+    { "type": "os",       "key": "{#90}│{#}  os",      "format": "{name} {version-id} {#90}{codename}" },
+    { "type": "kernel",   "key": "{#90}│{#}  kernel",  "format": "{release}" },
+    { "type": "wm",       "key": "{#90}│{#}  wm",      "format": "{pretty-name} {version}" },
+    { "type": "shell",    "key": "{#90}│{#}  shell",   "format": "{pretty-name} {version}" },
+    { "type": "terminal", "key": "{#90}│{#}  term",    "format": "{pretty-name}" },
+    { "type": "packages", "key": "{#90}│{#}  pkgs",    "format": "{nix-system} system {#90}·{#} {nix-user} user" },
+    { "type": "custom", "format": "{#90}├─ machine ────────────" },
+    { "type": "host",     "key": "{#90}│{#}  host",    "format": "{name}" },
+    { "type": "cpu",      "key": "{#90}│{#}  cpu",     "format": "{name} {#90}·{#} {core-types}" },
+    { "type": "gpu",      "key": "{#90}│{#}  gpu",     "format": "{core-count} cores {#90}·{#} {frequency}" },
+    { "type": "memory",   "key": "{#90}│{#}  mem",     "format": "{percentage-bar} {percentage} {#90}{used} / {total}" },
+    { "type": "disk",     "key": "{#90}│{#}  disk",    "folders": "/", "format": "{size-percentage-bar} {size-percentage} {#90}{size-used} / {size-total}" },
+    { "type": "battery",  "key": "{#90}│{#}  power",   "format": "{capacity-bar} {capacity} {#90}{status}" },
+    { "type": "custom", "format": "{#90}├─ now ────────────────" },
+    { "type": "uptime",   "key": "{#90}│{#}  uptime",  "format": "{formatted}" },
+    { "type": "custom", "format": "{#90}╰─────────────────────" },
+    "break",
+    { "type": "colors", "symbol": "circle", "paddingLeft": 2 }
+  ]
+}

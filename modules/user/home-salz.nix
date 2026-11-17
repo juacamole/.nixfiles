@@ -16,11 +16,15 @@
 	./apps/nvim/default.nix
 	./apps/gazelle.nix
 	./apps/claude.nix
+	./apps/pi.nix
 	./apps/quickshell
 	./apps/cursor.nix
+	./apps/theme.nix
+	./apps/fastfetch
 	./apps/battery.nix
 	./apps/battery-saver.nix
 	./apps/ssh.nix
+	./apps/pass.nix
   ];
 
   home.username = username;
@@ -35,6 +39,8 @@
 
   home.sessionPath = [
     "/home/${username}/.npm-global/bin"
+    # `go install` puts binaries here; without it they are installed but invisible.
+    "/home/${username}/go/bin"
   ];
 
   programs.zsh.enable = true;

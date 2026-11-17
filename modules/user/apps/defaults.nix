@@ -27,13 +27,13 @@ in {
       iwd
       tree
       yazi
+	  glow
       obs-studio
     ]
     ++ lib.optionals isDesktop [
       nbfc-linux
     ]
     ++ [
-      krita
       docker
 
       # wacom
@@ -53,6 +53,7 @@ in {
 
 
       # Coding
+	  mosquitto
 	  lazysql
       (lib.hiPrio gcc)
 	  maven

@@ -1,6 +1,6 @@
 // Implements the freedesktop notification spec via NotificationServer. Pops
-// each notification as a transient top-right card; stacks into a center when
-// toggled open via IPC.
+// each notification as a transient top-right card that drifts in from the
+// right; stacks into a center when toggled open via IPC.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -15,8 +15,20 @@ Scope {
     property var live: []      // currently-popping
     property var history: []   // last N retained
     readonly property int historyLimit: 50
+    // The one notification whose card should play the entrance animation.
+    // Rebinding `live` recreates ALL delegates, so without this guard every
+    // existing card would re-animate whenever a new one arrives.
+    property var lastAdded: null
 
     function toggle(): void { centerWin.visible = !centerWin.visible }
+
+    // Drop a notification from both stacks. Must run before the Notification
+    // object is destroyed: delegates holding a dead QObject in a JS-array
+    // model crash Qt (VDMListDelegateDataType::createMissingProperties).
+    function forget(notif): void {
+        root.live = root.live.filter(n => n && n !== notif)
+        root.history = root.history.filter(n => n && n !== notif)
+    }
 
     NotificationServer {
         id: server
@@ -28,10 +40,20 @@ Scope {
 
         onNotification: notif => {
             notif.tracked = true
-            root.live = [notif, ...root.live]
-            root.history = [notif, ...root.history].slice(0, root.historyLimit)
+            // Sender closed/replaced it, or it was dismissed/expired server-side:
+            // the object is deleted right after this signal, so drop it now.
+            notif.closed.connect(() => root.forget(notif))
+            root.lastAdded = notif
+            root.live = [notif, ...root.live.filter(n => n)]
+            const kept = [notif, ...root.history.filter(n => n)]
+            // Untrack overflow so the server frees it (closed → forget()).
+            kept.slice(root.historyLimit).forEach(n => { n.tracked = false })
+            root.history = kept.slice(0, root.historyLimit)
 
             // Auto-expire from the live stack. Notification center retains it.
+            // Critical urgency stays up until dismissed or closed by the
+            // sender (spec behaviour) — battery-warn relies on this.
+            if (notif.urgency === NotificationUrgency.Critical) return
             const ms = notif.expireTimeout > 0 ? notif.expireTimeout : 5000
             expireTimerComponent.createObject(root, { notif: notif, interval: ms })
         }
@@ -44,7 +66,7 @@ Scope {
             running: true
             repeat: false
             onTriggered: {
-                root.live = root.live.filter(n => n !== notif)
+                root.live = root.live.filter(n => n && n !== notif)
                 destroy()
             }
         }
@@ -56,14 +78,16 @@ Scope {
         color: "transparent"
         anchors { top: true; right: true }
         margins { top: Theme.barMargin + Theme.barHeight + 8; right: Theme.barMargin }
-        implicitWidth: 340
-        implicitHeight: stack.implicitHeight
+        implicitWidth: 340 + Theme.cardShadow
+        implicitHeight: stack.implicitHeight + Theme.cardShadow
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
         ColumnLayout {
             id: stack
             anchors.fill: parent
+            anchors.rightMargin: Theme.cardShadow
+            anchors.bottomMargin: Theme.cardShadow
             spacing: 8
 
             Repeater {
@@ -86,14 +110,14 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            color: Theme.bg
-            border.color: Theme.widgetHi
-            border.width: 1
-            radius: Theme.widgetRadius
+            color: Theme.base
+            border.color: Theme.ink
+            border.width: Theme.stroke
+            radius: 18
 
             ListView {
                 anchors.fill: parent
-                anchors.margins: 12
+                anchors.margins: 14
                 spacing: 8
                 clip: true
                 model: root.history
@@ -118,19 +142,45 @@ Scope {
         // Width is supplied by the outer ColumnLayout in the parent
         // PanelWindow via Layout.fillWidth. Height = content + padding.
         Layout.fillWidth: true
-        Layout.preferredHeight: col.implicitHeight + 24
-        implicitHeight: col.implicitHeight + 24
-        radius: Theme.widgetRadius
-        color: "#1a1a1a"
-        border.color: "#3a3a3a"
-        border.width: 1
+        Layout.preferredHeight: col.implicitHeight + 28
+        implicitHeight: col.implicitHeight + 28
+        radius: Theme.cardRadius
+        color: Theme.surface
+        border.color: card.notif?.urgency === NotificationUrgency.Critical ? Theme.red : Theme.ink
+        border.width: Theme.stroke
+
+        // Hard offset shadow. z: -1 draws it beneath the card body.
+        Rectangle {
+            z: -1
+            x: Theme.cardShadow
+            y: Theme.cardShadow
+            width: parent.width
+            height: parent.height
+            radius: parent.radius
+            color: Theme.ink
+        }
+
+        // Entrance: only the freshly-arrived card drifts in; recreated
+        // siblings render settled (see root.lastAdded).
+        transform: Translate { id: slide }
+        Component.onCompleted: {
+            if (card.notif === root.lastAdded) {
+                root.lastAdded = null
+                enter.start()
+            }
+        }
+        ParallelAnimation {
+            id: enter
+            NumberAnimation { target: card; property: "opacity"; from: 0; to: 1; duration: Theme.durMed; easing.type: Theme.easeInOut }
+            NumberAnimation { target: slide; property: "x"; from: 32; to: 0; duration: 420; easing.type: Theme.easeOut }
+        }
 
         Column {
             id: col
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 6
 
             // Header: app name + close button
@@ -143,12 +193,11 @@ Scope {
                     anchors.right: closeBtn.left
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
-                    text: (card.notif.appName || "notification").toLowerCase()
-                    color: Theme.dim
-                    font.family: Theme.fontMono
-                    font.pixelSize: 11
-                    font.letterSpacing: 0.5
-                    renderType: Text.NativeRendering
+                    text: (card.notif?.appName || "notification").toLowerCase()
+                    color: Theme.yellow
+                    font.family: Theme.font
+                    font.pixelSize: Theme.fontSizeSm
+                    font.letterSpacing: 1.2
                     elide: Text.ElideRight
                 }
 
@@ -158,16 +207,16 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 20
                     height: 20
-                    radius: 2
-                    color: closeMouse.containsMouse ? Theme.widgetHi : "transparent"
+                    radius: 10
+                    color: closeMouse.containsMouse ? Theme.hover : "transparent"
+                    Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
                     Text {
                         anchors.centerIn: parent
                         text: "×"
                         color: Theme.text
-                        font.family: Theme.fontMono
-                        font.pixelSize: 16
-                        renderType: Text.NativeRendering
+                        font.family: Theme.font
+                        font.pixelSize: 14
                     }
                     MouseArea {
                         id: closeMouse
@@ -188,25 +237,23 @@ Scope {
 
             Text {
                 width: parent.width
-                text: card.notif.summary
-                color: Theme.text
-                font.family: Theme.fontMono
-                font.pixelSize: 14
-                font.weight: Font.Bold
-                renderType: Text.NativeRendering
+                text: card.notif?.summary ?? ""
+                color: Theme.bright
+                font.family: Theme.font
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
                 wrapMode: Text.WordWrap
             }
 
             Text {
-                visible: card.notif.body.length > 0
+                visible: (card.notif?.body ?? "").length > 0
                 width: parent.width
-                text: card.notif.body
+                text: card.notif?.body ?? ""
                 color: Theme.text
-                font.family: Theme.fontMono
+                font.family: Theme.font
                 font.pixelSize: 12
-                renderType: Text.NativeRendering
                 wrapMode: Text.WordWrap
-                textFormat: card.notif.hasBodyMarkup ? Text.RichText : Text.PlainText
+                textFormat: card.notif?.hasBodyMarkup ? Text.RichText : Text.PlainText
             }
 
             // Action buttons (freedesktop notification "actions"). Senders like
@@ -217,29 +264,29 @@ Scope {
             Row {
                 width: parent.width
                 spacing: 6
-                visible: card.notif.actions && card.notif.actions.length > 0
+                visible: (card.notif?.actions?.length ?? 0) > 0
 
                 Repeater {
-                    model: card.notif.actions
+                    model: card.notif?.actions ?? []
                     delegate: Rectangle {
                         required property var modelData
                         readonly property var action: modelData
 
-                        height: 22
-                        width: btnLabel.implicitWidth + 16
-                        radius: 2
-                        color: btnMouse.containsMouse ? Theme.widgetHi : "#242424"
-                        border.color: "#3a3a3a"
-                        border.width: 1
+                        height: 24
+                        width: btnLabel.implicitWidth + 20
+                        radius: 12
+                        color: btnMouse.containsMouse ? Theme.yellow : Theme.raised
+                        border.color: Theme.ink
+                        border.width: Theme.stroke
+                        Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
                         Text {
                             id: btnLabel
                             anchors.centerIn: parent
-                            text: action.text
-                            color: Theme.text
-                            font.family: Theme.fontMono
+                            text: action?.text ?? ""
+                            color: btnMouse.containsMouse ? Theme.base : Theme.bright
+                            font.family: Theme.font
                             font.pixelSize: 11
-                            renderType: Text.NativeRendering
                         }
 
                         MouseArea {

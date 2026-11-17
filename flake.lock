@@ -16,6 +16,26 @@
         "type": "github"
       }
     },
+    "allam": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794619467,
+        "narHash": "sha256-6y7GZNodZvAsNE6nVmgYCKgUGQm4bx8aT2Dq8Y5qyXE=",
+        "owner": "juacamole",
+        "repo": "allam",
+        "rev": "c44523c99e354b33073f65199053f733263ecc77",
+        "type": "github"
+      },
+      "original": {
+        "owner": "juacamole",
+        "repo": "allam",
+        "type": "github"
+      }
+    },
     "apple-silicon": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -165,6 +185,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-claude": {
+      "locked": {
+        "lastModified": 1794299432,
+        "narHash": "sha256-Ls3BqiqmWJ1m2zMRHhRHednc/8m64t84VFALq2ZFGvU=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "4f0bf23e22fdaefaaa10b50360e14a0cac749156",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1762363567,
@@ -183,11 +219,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1785828668,
-        "narHash": "sha256-8fsyqeO+mJqvIzeO4xIpgJe/f7MTbbVTEC6RT6WSXNs=",
+        "lastModified": 1784007870,
+        "narHash": "sha256-djcLt/JJphyNt4eDY9XTly+/WbCK5lqWq9lSgCmJkkQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e72e4f299401a3689d4b3d5fc6496b11db7064eb",
+        "rev": "18b9261cb3294b6d2a06d03f96872827b8fe2698",
         "type": "github"
       },
       "original": {
@@ -238,10 +274,12 @@
     "root": {
       "inputs": {
         "actions-preview": "actions-preview",
+        "allam": "allam",
         "apple-silicon": "apple-silicon",
         "gazelle": "gazelle",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs_3",
+        "nixpkgs-claude": "nixpkgs-claude",
         "nixvim": "nixvim",
         "zen-browser": "zen-browser"
       }

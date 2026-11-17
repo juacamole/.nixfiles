@@ -34,8 +34,11 @@ in
       exec-once = [
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${setWallpaper}"
-		"hypridle"
-		"qs -c kuan -d"
+		# hypridle must NOT be exec-once'd: its lifecycle belongs to the
+		# idle-lock systemd unit (apps/hypridle.nix). A raw instance here is
+		# invisible to the bar toggle and keeps locking even when "off".
+		# Same for quickshell: it's a user service now (apps/quickshell), so a
+		# switch restarts it with the new QML.
       ] ++ lib.optionals isDesktop [
         "~/bash/tanatos/tanatos.sh"
       ];

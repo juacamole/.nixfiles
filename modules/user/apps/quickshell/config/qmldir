@@ -2,12 +2,17 @@ module kuan
 singleton Theme 1.0 Theme.qml
 singleton BatterySaver 1.0 BatterySaver.qml
 singleton IdleLock 1.0 IdleLock.qml
+singleton Allam 1.0 Allam.qml
+Slab 1.0 Slab.qml
+Icon 1.0 Icon.qml
+StatusItem 1.0 StatusItem.qml
 Bar 1.0 Bar.qml
 Workspaces 1.0 Workspaces.qml
+AllamWidget 1.0 AllamWidget.qml
 IdleLockToggle 1.0 IdleLockToggle.qml
+Memory 1.0 Memory.qml
 Clock 1.0 Clock.qml
 Battery 1.0 Battery.qml
-BatterySaverIndicator 1.0 BatterySaverIndicator.qml
 Volume 1.0 Volume.qml
 Network 1.0 Network.qml
 OSD 1.0 OSD.qml

@@ -1,38 +1,86 @@
 pragma Singleton
 import QtQuick
 
-// Severe grayscale. Single typeface (JetBrainsMono Nerd Font). No accent
-// colour — workspace activity / state is conveyed through brightness and
-// weight, not hue. Sharp 2-3px corners, full opacity (translucency is the
-// AI-default tell). Designed for restraint, not decoration.
+// "Ink & cream" — flat, opaque, neo-brutalist. Every surface is a solid
+// slab with a near-black ink outline and a hard offset shadow (see
+// Slab.qml); nothing is translucent, so hyprland no longer blurs the shell
+// layers. Palette pulled from the wallpaper (stormy night-blue). One accent
+// marks focus / "on" — still named `yellow` so widgets need no edits, but
+// now the pale periwinkle of the wind streaks; green (sea-glass) means a
+// daemon is healthy, red means muted / failing.
+//
+// The bar's anti-flicker rules still apply everywhere: NativeRendering for
+// bar text, fixed/padded widths, no spurious re-assigns. Animations act on
+// opacity / colour / position / width — never on scale of NativeRendering
+// text.
 QtObject {
-    // Surfaces — five steps of grey, near-black up to off-white.
-    readonly property color bg:       "#0d0d0d"   // panel-less bar wallpaper bleed if any
-    readonly property color widget:   "#161616"   // widget card bg
-    readonly property color widgetHi: "#242424"   // hover / active widget card
-    readonly property color rule:     "#2a2a2a"   // dividers, if used
+    // Surfaces
+    readonly property color base:    "#121a24"   // desktop / overlay backdrop
+    readonly property color surface: "#1a2533"   // pills, cards, panels
+    readonly property color raised:  "#273648"   // workspace dots, chips
+    readonly property color track:   "#2e4058"   // slider + ring tracks, "off" dot
+    readonly property color sep:     "#24324a"   // hairline row separators
+    readonly property color hover:   "#213044"   // pill face under the pointer
+    readonly property color ink:     "#080c12"   // outlines + hard shadows
 
-    // Text — three steps.
-    readonly property color text:     "#d4d4d4"   // primary
-    readonly property color dim:      "#8a8a8a"   // secondary (occupied workspace, etc.)
-    readonly property color faint:    "#5a5a5a"   // tertiary (empty workspace, idle)
+    // Text
+    readonly property color text:   "#8fa6bf"    // labels, icons at rest
+    readonly property color bright: "#e8eef2"    // values, emphasis (mask white)
+    readonly property color muted:  "#5a7089"    // off / disabled / captions
 
-    // Reserved for genuine alerts only. Use sparingly — never as decoration.
-    readonly property color warn:     "#b3a371"   // low battery, etc.
-    readonly property color crit:     "#c2392f"   // critical battery, mute, etc.
+    // Accents
+    readonly property color yellow: "#aebcf0"    // focus, "kept awake", starting (periwinkle)
+    readonly property color green:  "#8fc7b0"    // running / charging
+    readonly property color red:    "#e0948a"    // muted, low battery, errors
 
-    // Geometry — sharp, not pill-shaped. Small radius reads as crafted; the
-    // 12-16px rounded look reads as Catppuccin-default.
-    readonly property int barHeight:    30
-    readonly property int barMargin:    10
-    readonly property int widgetPad:    10
-    readonly property int widgetGap:    6
-    readonly property int widgetRadius: 3
+    // Geometry. Text ~x1.2 the mockup; bar icons deliberately much larger.
+    readonly property int pillHeight: 42     // tall enough for 35px icons
+    readonly property int dotSize:    36     // workspace dots
+    readonly property int shadow:     2      // hard shadow offset, pills
+    readonly property int cardShadow: 3      // hard shadow offset, cards
+    readonly property real stroke:    1.5    // ink outline width
+    readonly property int pillPad:    11
+    readonly property int pillGap:    12     // between icons inside a pill
+    readonly property int widgetGap:  8      // between pills
+    readonly property int cardRadius: 14
+    readonly property int barMargin:  8
+    // Visible bar strip: pill plus its shadow.
+    readonly property int barHeight:  pillHeight + shadow
 
-    // One typeface, two sizes. Mono everywhere — tabular figures, no reflow
-    // on minute change, and consistent rhythm across all widgets.
-    readonly property string fontMono: "JetBrainsMono Nerd Font"
-    readonly property string fontUi:   fontMono   // alias for callsites that still ask for "ui"
-    readonly property int    fontSize: 12
-    readonly property int    fontSizeSm: 10
+    // Type. Fredoka for everything; tabler-icons for glyphs (both shipped
+    // by default.nix).
+    readonly property string font:     "Fredoka"
+    readonly property string fontIcon: "tabler-icons"
+    readonly property int fontSize:   13
+    readonly property int fontSizeSm: 12
+    readonly property int barFontSize: 17   // clock, workspace numbers, hover values
+    readonly property int iconSize:   35
+    // Drawn glyphs (RAM ring, battery) are authored at a 20px icon size
+    // and scaled by this to match.
+    readonly property real glyphScale: iconSize / 20
+
+    // Tabler glyphs (webfont 3.42.0 codepoints).
+    readonly property string iBrain:     ""
+    readonly property string iCoffee:    ""
+    readonly property string iVolume:    ""   // two waves
+    readonly property string iVolume1:   ""   // one wave
+    readonly property string iVolumeOff: ""
+    readonly property string iWifi:      ""
+    readonly property string iWifiOff:   ""
+    readonly property string iWired:     ""
+    readonly property string iEject:     ""
+    readonly property string iPlay:      ""
+    readonly property string iLeaf:      ""
+    readonly property string iSearch:    ""
+    readonly property string iX:         ""
+    readonly property string iSun:       ""
+
+    // Motion — unhurried, eased, occasionally a whisper of overshoot.
+    readonly property int durFast: 150
+    readonly property int durMed:  280
+    readonly property int durSlow: 480
+    readonly property int easeOut:    Easing.OutCubic
+    readonly property int easeInOut:  Easing.InOutQuad
+    readonly property int easeSpring: Easing.OutBack
+    readonly property real overshoot: 1.4
 }

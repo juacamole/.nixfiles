@@ -1,8 +1,10 @@
 { ... }:
 let
-  activeWhite = "f5f5f5ff";
-  activeGray = "c8c8c8ff";
-  inactiveGray = "4a4a4aff";
+  # "Ink & cream" set, shared with the quickshell bar. Flat and calm: space
+  # gray outline for the focused window, near-black ink for the rest. (Yellow
+  # was tried here and read too loud at window scale.)
+  activeGray = "6b6780ff";
+  inactiveInk = "0f0e13ff";
 in
 {
   wayland.windowManager.hyprland.settings = {
@@ -12,6 +14,7 @@ in
       follow_mouse = 1;
       sensitivity = -0.25;
       touchpad.natural_scroll = false;
+      touchpad.disable_while_typing = true;
       kb_options = "caps:escape";
     };
     device = [{
@@ -39,9 +42,13 @@ in
       rounding = 10;
       active_opacity = 1.0;
       inactive_opacity = 1.0;
+      # Blur only does work behind surfaces with alpha: today that's just
+      # kitty (background_opacity 0.88). The bar and other windows are opaque,
+      # so they cost nothing. Kept light (1 pass) since GPU time is scarce
+      # here; without blur the see-through terminal reads as noise.
       blur = {
-        enabled = false;
-        size = 3;
+        enabled = true;
+        size = 6;
         passes = 1;
       };
     };
@@ -49,8 +56,8 @@ in
       gaps_in = 4;
       gaps_out = 8;
       border_size = 2;
-      "col.active_border" = "rgba(${activeWhite}) rgba(${activeGray}) 45deg";
-      "col.inactive_border" = "rgba(${inactiveGray})";
+      "col.active_border" = "rgba(${activeGray})";
+      "col.inactive_border" = "rgba(${inactiveInk})";
       layout = "dwindle";
     };
     misc.disable_hyprland_logo = true;

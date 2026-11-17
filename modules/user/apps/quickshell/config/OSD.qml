@@ -1,5 +1,5 @@
-// Volume / brightness toast. Fades out after 1.5s. Triggered by IPC from
-// hyprland binds via `qsctl osd volume` / `qsctl osd brightness`.
+// Volume / brightness toast, bottom center. Rises softly into view, lingers,
+// sinks away. Triggered by IPC from hyprland binds via `qsctl osd ...`.
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -42,58 +42,79 @@ Scope {
         }
 
         anchors { bottom: true }
-        margins { bottom: 80 }
-        implicitWidth: 240
-        implicitHeight: 64
+        margins { bottom: 72 }
+        implicitWidth: 280
+        implicitHeight: 56
         color: "transparent"
+        // Stay mapped while the exit fade plays out.
         visible: shown || card.opacity > 0
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
-        Rectangle {
+        Slab {
             id: card
-            anchors.fill: parent
-            color: Theme.bg
-            border.color: Theme.widgetHi
-            border.width: 1
-            radius: Theme.widgetRadius
+            // Leave room inside the window for the hard shadow.
+            width: parent.width - shadow
+            height: parent.height - shadow
+            shadow: Theme.cardShadow
             opacity: view.shown ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
+            Behavior on opacity { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeInOut } }
+            transform: Translate {
+                y: view.shown ? 0 : 14
+                Behavior on y { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeOut } }
+            }
 
-            Column {
-                anchors.centerIn: parent
-                spacing: 8
-                width: parent.width - 24
+            Icon {
+                id: icon
+                font.pixelSize: 22
+                anchors.left: parent.left
+                anchors.leftMargin: 18
+                anchors.verticalCenter: parent.verticalCenter
+                text: view.kind === "bright" ? Theme.iSun
+                    : root.muted ? Theme.iVolumeOff : Theme.iVolume
+                color: view.kind === "vol" && root.muted ? Theme.red : Theme.text
+            }
 
-                Text {
-                    text: view.label
-                    color: Theme.text
-                    font.family: Theme.fontUi
-                    font.pixelSize: 14
-                    horizontalAlignment: Text.AlignHCenter
-                    width: parent.width
-                }
+            Text {
+                id: pct
+                anchors.right: parent.right
+                anchors.rightMargin: 18
+                anchors.verticalCenter: parent.verticalCenter
+                width: 44
+                horizontalAlignment: Text.AlignRight
+                text: view.label
+                color: Theme.bright
+                font.family: Theme.font
+                font.pixelSize: Theme.fontSize
+            }
+
+            Rectangle {
+                anchors.left: icon.right
+                anchors.leftMargin: 12
+                anchors.right: pct.left
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+                height: 7
+                radius: 4
+                color: Theme.track
+                border.color: Theme.ink
+                border.width: 1
 
                 Rectangle {
-                    width: parent.width
-                    height: 4
-                    radius: 2
-                    color: Theme.widget
-                    Rectangle {
-                        width: parent.width * Math.max(0, Math.min(1, view.value))
-                        height: parent.height
-                        radius: parent.radius
-                        color: Theme.text
-                        Behavior on width { NumberAnimation { duration: 120 } }
-                    }
+                    x: 1; y: 1
+                    width: (parent.width - 2) * Math.max(0, Math.min(1, view.value))
+                    height: parent.height - 2
+                    radius: 3
+                    color: Theme.yellow
+                    Behavior on width { NumberAnimation { duration: 200; easing.type: Theme.easeOut } }
                 }
             }
         }
 
         Timer {
             id: hideTimer
-            interval: 1500
+            interval: 1600
             onTriggered: view.shown = false
         }
     }

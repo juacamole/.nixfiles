@@ -3,6 +3,21 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # Dedicated, independently-lockable nixpkgs used ONLY to source an
+    # up-to-date claude-code. The main nixpkgs above is deliberately held
+    # back to avoid a hyprland config breakage from a newer hypr release, so
+    # bumping it just to refresh claude-code is not an option. An overlay in
+    # mkHost pulls claude-code from here; `nix flake update nixpkgs-claude`
+    # bumps the CLI without moving anything else.
+    #
+    # Tracks master rather than nixos-unstable on purpose: the claude-code
+    # bump lands on master days before it reaches the unstable channel, and
+    # only claude-code is taken from this input, so master's lower testing
+    # bar costs nothing here. The package is a prebuilt binary (fetchurl of
+    # an upstream release), so nothing is compiled from this tree either.
+    nixpkgs-claude.url = "github:nixos/nixpkgs/master";
+
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -17,6 +32,10 @@
       flake = false;
     };
 	gazelle.url = "github:Zeus-Deus/gazelle-tui";
+	allam = {
+      url = "github:juacamole/allam";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
 	# Asahi / Apple Silicon support. NO nixpkgs.follows on purpose:
 	# upstream pins a tested nixpkgs + binary cache for the Asahi kernel;
@@ -33,6 +52,17 @@
         specialArgs = { inherit inputs username; };
         modules = [
           { nixpkgs.hostPlatform = system; }
+
+          # Source claude-code from the newer nixpkgs-claude input while the
+          # rest of pkgs stays on the pinned nixpkgs (see input comment).
+          # Import with allowUnfree because claude-code is unfree and this
+          # input has its own pkgs config, separate from the system one.
+          { nixpkgs.overlays = [ (final: prev: {
+              claude-code = (import inputs.nixpkgs-claude {
+                inherit system;
+                config.allowUnfree = true;
+              }).claude-code;
+            }) ]; }
 
           ./hosts/${hostname}/configuration.nix
           home-manager.nixosModules.home-manager {

@@ -3,10 +3,14 @@
     ./hardware-configuration.nix
     ./boot.nix
     ./asahi-nvram.nix
+    ./fn-power.nix
+    ./ctrl-click.nix
     ../../modules/system/desktop.nix
     ../../modules/system/audio.nix
+    ../../modules/system/bluetooth.nix
     ../../modules/system/steam-muvm.nix
     ../../modules/system/llm.nix
+    ../../modules/system/sddm.nix
   ];
 
   # Asahi kernel / firmware / hardware support is provided by the
@@ -42,28 +46,36 @@
   };
   console.keyMap = "sg";
 
+  # Let the user write the trackpad's kernel `inhibited` flag, used by the
+  # Fn+F4 toggle (modules/user/apps/hyprland/binds.nix). Inhibiting at the
+  # kernel drops the physical click too and releases a held button, which
+  # Hyprland's per-device `enabled = false` does not.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="input", KERNEL=="input*", ATTR{name}=="Apple SPI Trackpad", RUN+="${pkgs.coreutils}/bin/chown ${username} %S%p/inhibited"
+  '';
+
+  # Glorious Model O: let the logged-in user open its hidraw node, for the
+  # settings tool in ~/glorious. Shipped as a package rather than extraRules
+  # because uaccess is applied in 73-seat-late, and extraRules (99-local)
+  # would come too late.
+  services.udev.packages = [
+    (pkgs.writeTextDir "lib/udev/rules.d/70-glorious.rules" ''
+      SUBSYSTEM=="hidraw", ATTRS{idVendor}=="258a", ATTRS{idProduct}=="0036|0027|0033", TAG+="uaccess"
+    '')
+  ];
+
+  # The power button is the Touch ID key next to F12, easy to hit by
+  # accident. Have logind ignore it; Fn+Power shuts down instead
+  # (fn-power.nix), and holding it still forces a firmware power-off.
+  services.logind.settings.Login = {
+    HandlePowerKey = "ignore";
+    HandlePowerKeyLongPress = "ignore";
+  };
+
   # Shell Configuration
   programs.zsh.enable = true;
 
-  # Login Manager
-  services.greetd = {
-    enable = true;
-    settings = {
-      default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd start-hyprland";
-        user = username;
-      };
-    };
-  };
-  systemd.services.greetd.serviceConfig = {
-    Type = "idle";
-    StandardInput = "tty";
-    StandardOutput = "tty";
-    StandardError = "journal";
-    TTYReset = true;
-    TTYVHangup = true;
-    TTYVTDisallocate = true;
-  };
+  # Login Manager: SDDM, see modules/system/sddm.nix
 
   # User Definition
   users.users.${username} = {

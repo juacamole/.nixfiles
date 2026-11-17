@@ -10,11 +10,13 @@
     ./plugins/completion.nix
     ./plugins/format.nix
     ./plugins/dap.nix
+    ./plugins/terminal.nix
   ];
 
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
+    withNodeJs = true;
 
     extraConfigLuaPre = ''
       vim.g.mapleader = " "

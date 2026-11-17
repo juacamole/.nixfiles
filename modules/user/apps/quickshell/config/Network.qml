@@ -1,59 +1,24 @@
-// Polls `nmcli` for the active connection. Click opens `gazelle` (the user's
-// TUI of choice — set up in apps/gazelle.nix) in a kitty popup.
+// Polls `nmcli` for the active connection: wifi glyph, ethernet glyph when
+// wired, dim crossed-out wifi when offline. Hover for the network name.
+// Click opens `gazelle` (apps/gazelle.nix) in a kitty popup.
 import QtQuick
 import Quickshell.Io
 import "."
 
-Item {
+StatusItem {
     id: root
     property string state: "disconnected"   // "wifi:<ssid>" | "wired" | "disconnected"
     property string ssid: ""
 
-    implicitWidth: row.implicitWidth + Theme.widgetPad * 2
-    implicitHeight: Theme.barHeight - 8
+    label: state.startsWith("wifi") ? ssid : state === "wired" ? "wired" : "offline"
+    onClicked: picker.running = true
 
-    Rectangle {
-        anchors.fill: parent
-        radius: Theme.widgetRadius
-        color: hover.containsMouse ? Theme.widgetHi : Theme.widget
-        Behavior on color { ColorAnimation { duration: 100 } }
-    }
-
-    Row {
-        id: row
+    Icon {
         anchors.centerIn: parent
-        spacing: 5
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.state.startsWith("wifi") ? ""   // nf wifi
-                : root.state === "wired"        ? "󰈀"   // nf ethernet
-                                                : "󰖪"   // nf wifi-off
-            color: root.state === "disconnected" ? Theme.faint : Theme.dim
-            font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSize
-            renderType: Text.NativeRendering
-        }
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.state.startsWith("wifi") ? root.ssid : ""
-            visible: text.length > 0
-            color: Theme.text
-            font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSize
-            renderType: Text.NativeRendering
-            elide: Text.ElideRight
-            // Keep SSIDs from making the bar wobble.
-            width: Math.min(implicitWidth, 120)
-        }
-    }
-
-    MouseArea {
-        id: hover
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: picker.running = true
+        text: root.state.startsWith("wifi") ? Theme.iWifi
+            : root.state === "wired" ? Theme.iWired
+            : Theme.iWifiOff
+        color: root.state === "disconnected" ? Theme.muted : Theme.text
     }
 
     Process {
@@ -88,15 +53,15 @@ Item {
                 if (parts[0] === "wifi") {
                     poll._pendingState = "wifi:" + parts[2]
                     poll._pendingSsid = parts[2]
-                } else if (parts[0] === "ethernet") {
+                } else if (parts[0] === "ethernet" && poll._pendingState === "disconnected") {
                     poll._pendingState = "wired"
                 }
             }
         }
         onStarted: { _pendingState = "disconnected"; _pendingSsid = "" }
         onExited: {
-            root.state = _pendingState
-            root.ssid = _pendingSsid
+            if (root.state !== _pendingState) root.state = _pendingState
+            if (root.ssid !== _pendingSsid) root.ssid = _pendingSsid
         }
     }
 }

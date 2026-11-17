@@ -2,7 +2,6 @@
 	home.packages = with pkgs; [
 		claude-code
 		claude-monitor
-		claude-code-router
 	];
 
 	# Raise Claude Code's output cap from its 32000 default. Nothing
@@ -15,54 +14,48 @@
 	# and at ~20 tok/s even 32000 tokens would take ~27 minutes, so this cap
 	# is never the binding constraint locally. On the Anthropic route it is
 	# only safe if the CLI clamps to the model maximum; if requests start
-	# failing with a 400 about max_tokens, that is this. Fix by scoping it to
-	# the local route instead of setting it globally:
-	#     claude-local = "CLAUDE_CODE_MAX_OUTPUT_TOKENS=1048576 ccr code";
-	# in zsh.nix, and dropping this block.
-	# Must be programs.zsh.sessionVariables, NOT home.sessionVariables: the
-	# latter writes to hm-session-vars.sh, which nothing sources in this
-	# setup (the file is not even generated), so it silently does nothing.
-	# Verified by comparing against ANDROID_HOME from zsh.nix, which is set
-	# the same way and does reach a login shell. Merges with zsh.nix's block.
+	# failing with a 400 about max_tokens, that is this. Fix by dropping this
+	# block and prepending the variable to the claude-local alias in zsh.nix
+	# instead, so it only applies to the local route.
+	# home.sessionVariables would work equally well here — .zshenv sources
+	# hm-session-vars.sh from the Nix store. This uses the zsh-scoped option
+	# only to sit alongside zsh.nix's existing block; both are fine.
+	#
+	# Gotcha when testing this: .zshenv wraps its exports in a
+	# `if [[ -z "$__HM_ZSH_SESS_VARS_SOURCED" ]]` once-guard, and that guard
+	# is already set in any running session. So a new terminal, or any shell
+	# spawned from the current desktop, SKIPS the whole block and will not
+	# show a newly added variable — it only inherits what was exported at
+	# login. Verifying with `echo $VAR` in a new terminal therefore reports
+	# a false negative. Either log out and back in, or test with:
+	#     env -u __HM_ZSH_SESS_VARS_SOURCED zsh -c 'source ~/.zshenv; echo $VAR'
+	programs.zsh.sessionVariables.CLAUDE_CODE_MAX_OUTPUT_TOKENS = "1048576";
 
-	# claude-code-router (ccr) lets the Claude Code CLI you already use run
-	# against the LOCAL ollama models instead of Anthropic — the fallback for
-	# "when the subscription tokens run out". It exposes an Anthropic-format
-	# endpoint on 127.0.0.1:3456 and translates to ollama's OpenAI-compatible
-	# API. Usage:
-	#     claude       -> normal, hits Anthropic (subscription)
-	#     ccr code     -> same CLI, routed to local qwen3.6  (alias: claude-local)
+	# Local prompt processing runs at ~125 tok/s (measured), so a full 64k
+	# context takes ~8.5 minutes before the first token. Claude Code's
+	# default request timeout is far shorter, so it aborts mid-request and
+	# ollama logs a 500 for the dropped connection — which looks like ollama
+	# killing the model but is not: the journal shows those tasks finishing
+	# normally with truncated = 0 right after the client gave up. Observed
+	# 500s at 4m50s and 1m12s against a 63221-token prompt.
 	#
-	# Every route points at the SAME model on purpose. The Asahi Vulkan heap
-	# is 31.3 GiB and llm.nix pins OLLAMA_MAX_LOADED_MODELS=1, so only one
-	# model is resident at a time (qwen3.6 is 24 GiB, gpt-oss 13 GiB — they do
-	# not co-fit). If "default" and "background" pointed at different models,
-	# every background task (git-diff summaries, title generation) would evict
-	# and reload a 24 GiB model — seconds of thrash per turn. Keeping all
-	# routes on qwen3.6 means the model loads once per session and stays put.
-	# gpt-oss is still listed under the provider, so `ccr model` can switch the
-	# whole session to it when a lighter/faster general model is wanted.
+	# 30 minutes covers a worst-case full-context turn with margin. This only
+	# raises the ceiling for waiting; it does not slow anything down, and on
+	# the Anthropic route requests never get near it.
+	programs.zsh.sessionVariables.API_TIMEOUT_MS = "1800000";
+
+	# API_TIMEOUT_MS alone did NOT fix the 500s: a request from a process
+	# that provably had API_TIMEOUT_MS=1800000 in its environment still died
+	# at 4m45s. The giveaway is that ollama kept working for 90+ seconds
+	# after the client hung up (500 logged 14:29:53, ollama still processing
+	# task 52 at 14:31:21), so nothing crashed — the connection was dropped
+	# from this side.
 	#
-	# This file is home-manager-managed and therefore read-only; edit it here
-	# and rebuild rather than via `ccr ui`. Endpoint/port are ccr defaults.
-	home.file.".claude-code-router/config.json".text = builtins.toJSON {
-		LOG = false;
-		Providers = [
-			{
-				name = "ollama";
-				api_base_url = "http://localhost:11434/v1/chat/completions";
-				api_key = "ollama"; # ollama ignores it; ccr requires the field
-				models = [ "qwen3.6:35b-a3b" "gpt-oss:20b" ];
-			}
-		];
-		Router = {
-			default = "ollama,qwen3.6:35b-a3b";
-			background = "ollama,qwen3.6:35b-a3b";
-			think = "ollama,qwen3.6:35b-a3b";
-			longContext = "ollama,qwen3.6:35b-a3b";
-			# Just under llm.nix's 64k OLLAMA_CONTEXT_LENGTH. Same model on
-			# both sides of the threshold, so this is only a safety marker.
-			longContextThreshold = 60000;
-		};
-	};
+	# Claude Code is a Bun build, and Bun's HTTP client applies an idle
+	# timeout of ~300 s. During prompt processing the server sends no bytes
+	# at all for minutes, so the connection looks idle and Bun closes it.
+	# That matches the observed failures almost exactly: 4m45s and 4m50s
+	# against a ~300 s default. Value is in SECONDS, not ms.
+	programs.zsh.sessionVariables.BUN_CONFIG_HTTP_IDLE_TIMEOUT = "3600";
+
 }

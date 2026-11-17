@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, inputs, ... }:
 
 # Local LLM inference on Asahi, served by ollama over the M1 Max GPU.
 #
@@ -48,13 +48,6 @@
     # that DynamicUser is off, not a /var/lib/private symlink.
     home = "/var/lib/ollama";
 
-    loadModels = [
-      # Coding. 35B total / 3B active, 23 GB on disk.
-      "qwen3.6:35b-a3b"
-      # General purpose. 20B MoE, 13 GB on disk.
-      "gpt-oss:20b"
-    ];
-
     environmentVariables = {
       # The coding model alone is 21.7 GiB of the 31.3 GiB heap. Keeping a
       # second model resident would overflow it and force a CPU spill, so
@@ -89,14 +82,46 @@
       # VK_EXT_global_priority, ggml has no knob to request a low-priority
       # queue. Only creating real GPU idle time works — see num_gpu below.
 
-      # 64k rather than the 32k default. Was 128k, halved because the GPU
-      # that runs inference also drives the Hyprland desktop, and the Asahi
-      # GPU has limited preemption: processing a full 128k-token context
-      # pegged the GPU for minutes and froze the UI. 64k caps that worst
-      # case at ~30-45s while still letting the model see a lot of code.
-      # Heap is not the limit here (KV at 64k is only ~1.3 GiB on top of
-      # 21.7 GiB weights); desktop responsiveness is.
-      OLLAMA_CONTEXT_LENGTH = "65536";
+      # qwen3.6's full native window. Previously 64k, on the theory that a
+      # bigger window would itself slow things down. Measured, and it does
+      # not: attention cost scales with tokens actually in the sequence, not
+      # with the size of the window allocated. Same ~9.6k-token prompt at
+      # both settings:
+      #     n_ctx  65536   pp 136 tok/s   tg 17.98 tok/s   24 GB resident
+      #     n_ctx 262144   pp 146 tok/s   tg 18.83 tok/s   28 GB resident
+      # (differences are run-to-run noise). The only real cost is the KV
+      # cache, allocated up front at load time: +4 GB on every load, even
+      # for a two-line chat. 28 GB against a 31.3 GiB heap still fits, but
+      # the headroom is no longer generous — if KV allocation ever starts
+      # failing, this is the first thing to lower.
+      #
+      # What does NOT change is that filling the window is expensive: at
+      # ~140 tok/s, 262k tokens is ~35 minutes of prompt processing, and
+      # prompt processing is exactly the phase that stalls the compositor
+      # 6.4x (see the lag notes below). So this raises a ceiling rather than
+      # making anything faster — it removes an artificial truncation point,
+      # and the cost is only paid by sessions that actually grow that large.
+      OLLAMA_CONTEXT_LENGTH = "262144";
+
+      # The 31.3 GiB Vulkan heap is not a hardware limit: Honeykrisp
+      # advertises exactly half of system RAM (SYSMEM_HEAP_FRACTION in
+      # mesa's src/asahi/vulkan/hk_physical_device.c) and reads HK_SYSMEM
+      # (bytes) as an override. Verified 2026-08-11 with vulkaninfo:
+      # 31.31 GiB stock -> 48.00 GiB with this set. Memory is unified, so
+      # the kernel allocates GPU pages from regular RAM on demand either
+      # way — the heap size only gates what allocations the driver will
+      # attempt.
+      #
+      # 55 GiB leaves ~7 GiB for the rest of the system, with the 16 GiB
+      # swapfile below as the backstop for desktop anonymous memory. Beware
+      # that the driver accounts "available" against its own usage only,
+      # not actual free RAM, so an overcommitted heap ends in the OOM
+      # killer rather than a clean Vulkan error. Motivation:
+      # qwen3-coder-next (80B-A3B, 51 GB at Q4) was stuck at 24/49 GPU
+      # layers (~3.4 tok/s); at 55 GiB even full 49/49 offload (~53 GiB
+      # with KV) should fit. Re-tune num_gpu in the qwen3-coder-next:fit
+      # Modelfile after the first rebuild with this.
+      HK_SYSMEM = "59055800320";
     };
   };
 
@@ -176,4 +201,36 @@
   # /dev/dri/renderD128) is set by the module independently of DynamicUser,
   # so Vulkan still works.
   systemd.services.ollama.serviceConfig.DynamicUser = lib.mkForce false;
+
+  # Second serving path: llama-server, started by hand with ~/models/serve.sh (router on
+  # :8080). Pinned newer llama.cpp + a local ggml-vulkan patch; see llama-cpp/package.nix.
+  # The patch supersedes two conclusions in the lag notes above, measured 2026-11-11/12
+  # (~/llm/RESULTS.md):
+  #   - Queue priority IS available now: GGML_VK_QUEUE_PRIORITY=low requests a
+  #     VK_KHR_global_priority LOW queue. It helps, but is not enough on its own.
+  #   - The stall is not FIFO across submissions as such. Honeykrisp chains the dispatches
+  #     inside a command stream into one run the compositor cannot cut into (prompt-batch
+  #     matmuls are 15-45 ms each). A timestamp write after every op splits that run
+  #     (GGML_VK_PREEMPT_POINTS=1). With -ub 64 (5 ms matmuls) the desktop stayed ~95%
+  #     smooth during prompt processing, for -30% prompt speed and 0% generation cost.
+  #     That is why "smaller batches: no effect" above was true without split points.
+  # ollama bundles its own ggml, so none of this applies to the ollama service.
+  environment.systemPackages = [
+    (import ./llama-cpp/package.nix { inherit pkgs; })
+    # allam: small daemon to change -ub/-b and load/unload models (~/cpp/allam, own repo).
+    # Flake input github:juacamole/allam; `nix flake update allam` picks up new pushes.
+    inputs.allam.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
+
+  # EXPERIMENT (2026-11-13): re-enable GPU compute preemption.
+  # The Asahi kernel disables it for every compute queue
+  # (drivers/gpu/drm/asahi/workqueue.rs: "Hack to disable compute preemption until we fix
+  # it"), unless DebugFlags::Debug0 (bit 48) is set. Without preemption the compositor must
+  # wait for each running compute job to finish, which is the real cause of the desktop lag
+  # during inference; macOS runs the same GPU firmware with preemption on and does not lag.
+  # Priority is no help: Hyprland's HIGH request is silently MEDIUM in Mesa, and the kernel
+  # rejects HIGH/REALTIME with EINVAL.
+  # "until we fix it" means known bugs: watch for GPU faults/hangs (journalctl -k) and wrong
+  # results (llama-perplexity). Roll back by booting the previous generation or deleting this.
+  boot.kernelParams = [ "asahi.debug_flags=0x1000000000000" ];
 }

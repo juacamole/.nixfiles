@@ -11,6 +11,10 @@
 #     the daemon and records the choice in a state file, so it persists across
 #     reboots; the `idle-lock-apply` oneshot re-applies "on" at login.
 #   * QS's IdleLock singleton shells out to `idle-lock toggle` / `status`.
+#   * the toggle also governs the lid: logind suspends on lid close by
+#     default, so while idle-lock is OFF a `lid-awake` unit holds a
+#     handle-lid-switch inhibitor and closing the lid does nothing. While ON,
+#     the inhibitor is gone, the lid suspends, and hypridle locks first.
 let
   idleTimeoutMinutes = 10;
 
@@ -26,8 +30,8 @@ let
       read_state() { if [ -f "$STATE_FILE" ]; then cat "$STATE_FILE"; else echo off; fi; }
       write_state() { printf '%s\n' "$1" > "$STATE_FILE"; }
 
-      start_idle() { systemctl --user start hypridle; }
-      stop_idle()  { systemctl --user stop hypridle; }
+      start_idle() { systemctl --user stop lid-awake; systemctl --user start hypridle; }
+      stop_idle()  { systemctl --user stop hypridle; systemctl --user start lid-awake; }
 
       case "''${1:-}" in
         enable)  start_idle; write_state on ;;
@@ -36,8 +40,8 @@ let
           if [ "$(read_state)" = "on" ]; then stop_idle; write_state off;
           else start_idle; write_state on; fi ;;
         status)  read_state ;;
-        # Called from the session-start unit; no-op unless state says "on".
-        apply)   if [ "$(read_state)" = "on" ]; then start_idle; fi ;;
+        # Called from the session-start unit.
+        apply)   if [ "$(read_state)" = "on" ]; then start_idle; else stop_idle; fi ;;
         *) echo "usage: idle-lock {enable|disable|toggle|status|apply}" >&2; exit 2 ;;
       esac
     '';
@@ -49,6 +53,7 @@ in
   xdg.configFile."hypr/hypridle.conf".text = ''
     general {
         lock_cmd = pidof hyprlock || hyprlock
+        before_sleep_cmd = loginctl lock-session
         after_sleep_cmd = hyprctl dispatch dpms on
     }
 
@@ -73,7 +78,20 @@ in
     };
   };
 
-  # Re-apply saved idle-lock state on login (starts hypridle iff state == on).
+  # Idle-lock OFF == lid close is ignored. Holds a logind block inhibitor on
+  # handle-lid-switch for as long as it runs; started/stopped by `idle-lock`.
+  systemd.user.services.lid-awake = {
+    Unit = {
+      Description = "Ignore lid close while idle-lock is off";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=handle-lid-switch --who=idle-lock --why=idle-lock-off --mode=block ${pkgs.coreutils}/bin/sleep infinity";
+    };
+  };
+
+  # Re-apply saved idle-lock state on login (hypridle if on, lid-awake if off).
   systemd.user.services.idle-lock-apply = {
     Unit = {
       Description = "Re-apply idle-lock state on session start";

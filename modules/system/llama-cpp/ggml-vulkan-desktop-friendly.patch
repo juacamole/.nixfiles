@@ -1,0 +1,179 @@
+diff --git a/ggml/src/ggml-vulkan/ggml-vulkan.cpp b/ggml/src/ggml-vulkan/ggml-vulkan.cpp
+index 502f733..fcf8316 100644
+--- a/ggml/src/ggml-vulkan/ggml-vulkan.cpp
++++ b/ggml/src/ggml-vulkan/ggml-vulkan.cpp
+@@ -4578,6 +4578,22 @@ vk_device ggml_vk_get_device(size_t idx) {
+             device_queue_create_infos.push_back({queue_flags, compute_queue_family_index, 1, priorities});
+         }
+ 
++        // Local patch (salz): GGML_VK_QUEUE_PRIORITY=low|medium|high requests a global queue
++        // priority via VK_KHR_global_priority, so a desktop compositor can preempt inference.
++        static VkDeviceQueueGlobalPriorityCreateInfoKHR ggml_vk_global_prio{
++            VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_KHR, nullptr, VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_KHR};
++        if (const char * qp = getenv("GGML_VK_QUEUE_PRIORITY")) {
++            const std::string s(qp);
++            ggml_vk_global_prio.globalPriority = s == "low"  ? VK_QUEUE_GLOBAL_PRIORITY_LOW_KHR
++                                               : s == "high" ? VK_QUEUE_GLOBAL_PRIORITY_HIGH_KHR
++                                                             : VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_KHR;
++            for (auto & qci : device_queue_create_infos) {
++                qci.pNext = &ggml_vk_global_prio;
++            }
++            device_extensions.push_back("VK_KHR_global_priority");
++            GGML_LOG_INFO("ggml_vulkan: queue global priority = %s\n", qp);
++        }
++
+         device->pipeline_executable_properties_support = pipeline_executable_properties_support;
+ 
+         device->fp16 = device->fp16 && vk12_features.shaderFloat16;
+@@ -14534,6 +14550,38 @@ static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cg
+     ggml_vk_submit_transfer_ctx(ctx);
+ 
+     vk_context compute_ctx;
++    // Local patch (salz): GGML_VK_PREEMPT_POINTS=1 writes a timestamp + barrier after every op in
++    // large graphs (prompt batches >= GGML_VK_PREEMPT_MIN_GFLOPS, default 500). On Asahi/Honeykrisp
++    // this splits the GPU command stream so the compositor can preempt between ops; without it,
++    // back-to-back 15-45 ms matmuls freeze the desktop. Results are never read back.
++    static const bool ggml_vk_preempt_env = getenv("GGML_VK_PREEMPT_POINTS") != nullptr;
++    static const uint64_t ggml_vk_preempt_min_flops = [] {
++        const char * s = getenv("GGML_VK_PREEMPT_MIN_GFLOPS");
++        return (s ? std::strtoull(s, nullptr, 10) : 500ULL) * 1'000'000'000ULL;
++    }();
++    bool preempt_points = false;
++    if (ggml_vk_preempt_env && !vk_perf_logger_enabled) {
++        uint64_t graph_flops = 0;
++        for (int k = 0; k < cgraph->n_nodes; k++) {
++            graph_flops += ggml_vk_get_node_flops(cgraph->nodes[k]);
++        }
++        preempt_points = graph_flops >= ggml_vk_preempt_min_flops;
++        if (preempt_points) {
++            if (ctx->num_queries < cgraph->n_nodes + 1) {
++                if (ctx->query_pool) {
++                    ctx->device->device.destroyQueryPool(ctx->query_pool);
++                }
++                vk::QueryPoolCreateInfo query_create_info;
++                query_create_info.queryType = vk::QueryType::eTimestamp;
++                query_create_info.queryCount = cgraph->n_nodes + 100;
++                ctx->query_pool = ctx->device->device.createQueryPool(query_create_info);
++                ctx->num_queries = query_create_info.queryCount;
++            }
++            ctx->device->device.resetQueryPool(ctx->query_pool, 0, cgraph->n_nodes + 1);
++            ctx->query_idx = 0;
++        }
++    }
++
+     if (vk_perf_logger_enabled) {
+         // allocate/resize the query pool
+         if (ctx->num_queries < cgraph->n_nodes + 1) {
+@@ -14585,6 +14633,11 @@ static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cg
+     uint64_t batch_flops = 0;
+     uint64_t total_flops = 0;
+     uint64_t flops_cap = 200'000'000'000ULL;
++    // Local patch (salz): GGML_VK_MAX_FLOPS_PER_SUBMIT=N caps the work per submission (shorter GPU jobs
++    // let the compositor in sooner; pairs with GGML_VK_SERIALIZE_SUBMISSIONS + GGML_VK_SUBMIT_SLEEP_US).
++    if (const char * fc = getenv("GGML_VK_MAX_FLOPS_PER_SUBMIT")) {
++        flops_cap = std::max<uint64_t>(std::strtoull(fc, nullptr, 10), 1'000'000ULL);
++    }
+ 
+     // On weaker AMD GPUs larger submissions can hit a driver timeout, submit more often to avoid this
+     if (ctx->device->vendor_id == VK_VENDOR_ID_AMD && ctx->device->shader_core_count > 0) {
+@@ -14615,6 +14668,15 @@ static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cg
+             }
+             ctx->device->device.resetFences({ ctx->fence });
+             ctx->submit_pending = false;
++            // Local patch (salz): GGML_VK_SUBMIT_SLEEP_US=N leaves the GPU idle for N us after each
++            // serialized submission, so the desktop compositor always gets a slot.
++            static const long ggml_vk_submit_sleep_us = [] {
++                const char * s = getenv("GGML_VK_SUBMIT_SLEEP_US");
++                return s ? std::atol(s) : 0L;
++            }();
++            if (ggml_vk_submit_sleep_us > 0) {
++                std::this_thread::sleep_for(std::chrono::microseconds(ggml_vk_submit_sleep_us));
++            }
+             ctx->device->diag_cgraph = cgraph;
+             ctx->device->diag_prev_start = start;
+             ctx->device->diag_prev_end = end;
+@@ -14930,6 +14992,10 @@ static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cg
+                 ctx->query_fusion_names[i] = fusion_string;
+                 ctx->query_fusion_node_count[i] = ctx->num_additional_fused_ops;
+             }
++        } else if (preempt_points && enqueued && ctx->query_idx < ctx->num_queries) {
++            compute_ctx = ggml_vk_get_compute_ctx(ctx);
++            compute_ctx->s->buffer->buf.writeTimestamp(vk::PipelineStageFlagBits::eAllCommands, ctx->query_pool, ctx->query_idx++);
++            ggml_vk_sync_buffers(ctx, compute_ctx);
+         }
+ 
+         if (enqueued) {
+diff --git a/tools/server/server-http.cpp b/tools/server/server-http.cpp
+index cf147c7..ee28c16 100644
+--- a/tools/server/server-http.cpp
++++ b/tools/server/server-http.cpp
+@@ -673,9 +673,17 @@ static void process_handler_response(server_http_req_ptr && request, server_http
+     }
+ }
+ 
++// Local patch (salz): see g_server_shutting_down in server-http.h. httplib's Request outlives the
++// handler (also for streamed responses), so wrapping its member here is safe.
++static void ggml_salz_wrap_should_stop(const httplib::Request & req) {
++    auto & f = const_cast<std::function<bool()> &>(req.is_connection_closed);
++    f = [orig = f]() { return g_server_shutting_down.load() || (orig && orig()); };
++}
++
+ void server_http_context::get(const std::string & path, const server_http_context::handler_t & handler) const {
+     handlers.emplace(path, handler);
+     auto callback = [handler](const httplib::Request & req, httplib::Response & res) {
++        ggml_salz_wrap_should_stop(req);
+         server_http_req_ptr request = std::make_unique<server_http_req>(server_http_req{
+             get_params(req),
+             get_headers(req),
+@@ -697,6 +705,7 @@ void server_http_context::get(const std::string & path, const server_http_contex
+ void server_http_context::post(const std::string & path, const server_http_context::handler_t & handler) const {
+     handlers.emplace(path, handler);
+     auto callback = [handler](const httplib::Request & req, httplib::Response & res) {
++        ggml_salz_wrap_should_stop(req);
+         std::string body = req.body;
+         std::map<std::string, uploaded_file> files;
+ 
+@@ -798,6 +807,7 @@ void server_http_context::ws(const std::string & path, const server_http_context
+ void server_http_context::del(const std::string & path, const server_http_context::handler_t & handler) const {
+     handlers.emplace(path, handler);
+     auto callback = [handler](const httplib::Request & req, httplib::Response & res) {
++        ggml_salz_wrap_should_stop(req);
+         server_http_req_ptr request = std::make_unique<server_http_req>(server_http_req{
+             get_params(req),
+             get_headers(req),
+diff --git a/tools/server/server-http.h b/tools/server/server-http.h
+index d123535..9db7c92 100644
+--- a/tools/server/server-http.h
++++ b/tools/server/server-http.h
+@@ -46,6 +46,11 @@ struct uploaded_file {
+     std::string content_type;
+ };
+ 
++// Local patch (salz): set on SIGTERM/SIGINT. Every request then reports "connection closed",
++// so in-flight generations cancel at the next batch boundary and the server can exit without
++// killing a GPU job mid-flight (which faults the Asahi GPU when compute preemption is on).
++inline std::atomic<bool> g_server_shutting_down{false};
++
+ struct server_http_req {
+     std::map<std::string, std::string> params; // path_params + query_params
+     std::map<std::string, std::string> headers; // used by MCP proxy
+diff --git a/tools/server/server.cpp b/tools/server/server.cpp
+index 4e838cb..a5ed3f5 100644
+--- a/tools/server/server.cpp
++++ b/tools/server/server.cpp
+@@ -565,6 +565,7 @@ static int server_run_router(common_params & params, int argc, char ** argv, con
+     ctx_http.is_ready.store(true);
+ 
+     shutdown_handler = [&](int) {
++        g_server_shutting_down.store(true); // local patch (salz): cancel in-flight requests
+         if (models_routes.has_value()) {
+             // important to disconnect any SSE clients
+             models_routes->stopping.store(true);
+@@ -685,6 +686,7 @@ static int server_run_instance(common_params & params, server_role & role, commo
+     SRV_INF("%s", "model loaded\n");
+ 
+     shutdown_handler = [&](int) {
++        g_server_shutting_down.store(true); // local patch (salz): cancel in-flight requests
+         mcp_mgr.shutdown();
+         // this will unblock start_loop()
+         ctx_server.terminate();

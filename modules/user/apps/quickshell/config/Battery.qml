@@ -1,68 +1,72 @@
-// Reads the first battery under /sys/class/power_supply via a 10s poll.
-// Avoids guessing UPower API shape across QS versions, and self-hides on
-// machines without a battery (pommes/desktop).
+// Battery glyph drawn from rectangles: the inner bar fills with charge
+// (green while charging, red below 20%). A small yellow leaf unfurls beside
+// it while battery-saver is on. Hover for the percentage; click toggles
+// battery-saver (BatterySaver.qml).
 //
-// Click toggles battery-saver mode (see BatterySaver.qml singleton). When
-// saver is active the bolt/battery glyph tints Theme.warn (gold). The
-// percentage text keeps its own crit/dim binding so the "low battery" signal
-// is never stolen by the "saver on" signal.
+// Reads the first battery under /sys/class/power_supply via a poll — avoids
+// guessing UPower API shape across QS versions, and self-hides on machines
+// without a battery (pommes/desktop).
 import QtQuick
 import Quickshell.Io
 import "."
 
-Item {
+StatusItem {
     id: root
     property int capacity: -1
     property string state: ""
     readonly property bool hasBattery: capacity >= 0
     readonly property bool charging: state === "Charging" || state === "Full"
+    readonly property bool low: hasBattery && capacity < 20
+    readonly property bool saver: BatterySaver.active
 
     visible: hasBattery
-    implicitWidth: visible ? row.implicitWidth + Theme.widgetPad * 2 : 0
-    implicitHeight: Theme.barHeight - 8
+    glyphWidth: Math.round((24 + (saver ? 21 : 0)) * Theme.glyphScale)
+    Behavior on glyphWidth { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeOut } }
+    label: capacity + "%" + (charging ? " · charging" : "")
+    onClicked: BatterySaver.toggle()
 
-    Rectangle {
-        anchors.fill: parent
-        radius: Theme.widgetRadius
-        color: hover.containsMouse ? Theme.widgetHi : Theme.widget
-        Behavior on color { ColorAnimation { duration: 100 } }
+    Item {
+        id: body
+        width: 24
+        height: 14
+        anchors.verticalCenter: parent.verticalCenter
+        // Authored at 20px-icon size, scaled up from the left edge.
+        scale: Theme.glyphScale
+        transformOrigin: Item.Left
+
+        Rectangle {
+            x: 1; y: 1
+            width: 20; height: 12
+            radius: 3
+            color: "transparent"
+            border.color: root.low ? Theme.red : Theme.text
+            border.width: 1.5
+        }
+        Rectangle {
+            x: 3.5; y: 3.5
+            height: 7
+            radius: 1
+            width: Math.max(1, 15 * Math.max(0, Math.min(1, root.capacity / 100)))
+            color: root.low ? Theme.red : root.charging ? Theme.green : Theme.text
+            Behavior on width { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.easeOut } }
+            Behavior on color { ColorAnimation { duration: Theme.durMed } }
+        }
+        Rectangle {
+            x: 22; y: 4.5
+            width: 1.8; height: 5
+            radius: 0.5
+            color: root.low ? Theme.red : Theme.text
+        }
     }
 
-    Row {
-        id: row
-        anchors.centerIn: parent
-        spacing: 6
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.charging ? "" : "" // nf bolt / battery
-            // Priority: low battery > saver active > normal dim. Never re-assign
-            // `text` based on saver state — that would reflow the row.
-            color: root.capacity < 20 ? Theme.crit
-                 : BatterySaver.active ? Theme.warn
-                 : Theme.dim
-            font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSize
-            renderType: Text.NativeRendering
-        }
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            // Pad to 4 chars so the row doesn't reflow when crossing 9%/10%/100%.
-            text: (root.capacity + "%").padStart(4, " ")
-            color: root.capacity < 20 ? Theme.crit : Theme.text
-            font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSize
-            renderType: Text.NativeRendering
-        }
-    }
-
-    MouseArea {
-        id: hover
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        acceptedButtons: Qt.LeftButton
-        onClicked: BatterySaver.toggle()
+    Icon {
+        x: Math.round(27 * Theme.glyphScale)
+        anchors.verticalCenter: parent.verticalCenter
+        text: Theme.iLeaf
+        font.pixelSize: Math.round(17 * Theme.glyphScale)
+        color: Theme.yellow
+        opacity: root.saver ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeInOut } }
     }
 
     // Slow the sysfs poll in saver mode. 60s is still faster than any human
@@ -82,7 +86,7 @@ Item {
         stdout: SplitParser {
             onRead: line => {
                 const n = parseInt(line, 10)
-                if (!isNaN(n)) root.capacity = n
+                if (!isNaN(n) && n !== root.capacity) root.capacity = n
             }
         }
     }
@@ -90,7 +94,10 @@ Item {
         id: statusP
         command: ["sh", "-c", "cat /sys/class/power_supply/*/status 2>/dev/null | head -n1"]
         stdout: SplitParser {
-            onRead: line => { root.state = line.trim() }
+            onRead: line => {
+                const s = line.trim()
+                if (s !== root.state) root.state = s
+            }
         }
     }
 }

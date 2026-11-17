@@ -50,10 +50,7 @@
 
     # --- Navigation ---
     { mode = "n"; key = "<leader>e"; action = "<cmd>Neotree toggle<cr>"; options.desc = "Explorer"; }
-    { mode = "n"; key = "<C-h>"; action = "<C-w>h"; }
-    { mode = "n"; key = "<C-j>"; action = "<C-w>j"; }
-    { mode = "n"; key = "<C-k>"; action = "<C-w>k"; }
-    { mode = "n"; key = "<C-l>"; action = "<C-w>l"; }
+    # <C-hjkl> split/kitty navigation lives in plugins/terminal.nix (smart-splits)
     { mode = "n"; key = "<leader>uh"; action = "<cmd>nohlsearch<cr>"; options.desc = "No Highlight"; }
 
     # --- Debug (DAP) ---

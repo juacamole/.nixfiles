@@ -1,7 +1,13 @@
-// Floating "island" top bar. Three columns: workspaces | clock (centered) |
-// system tray (volume, network, battery if present).
+// Floating pills along the top edge, no bar background — the wallpaper
+// shows between them. Three independently-anchored clusters:
+//   left   workspace dots + allam brain pill
+//   center clock
+//   right  one status pill: coffee (idle inhibitor), RAM ring, volume,
+//          wifi, battery
+// The clock is anchored to the panel's geometric center, NOT positioned by a
+// layout, so when the side clusters change width (hover reveals, workspace
+// dots appearing) it cannot shift.
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import "."
@@ -13,54 +19,70 @@ PanelWindow {
     property var modelData
     screen: modelData
 
-    // Panel covers the full top strip including the floating-island gaps on
-    // all sides. That way the exclusion zone (panel height) reserves enough
-    // room for the bar + the gap below it, so hyprland tiles never slip
-    // underneath. The visible island lives inset by barMargin on every side.
+    // Reserve the top margin + pill strip; hyprland's gaps_out supplies the
+    // space between the pills and the tiles below.
     anchors { top: true; left: true; right: true }
-    implicitHeight: Theme.barHeight + Theme.barMargin * 2
+    implicitHeight: Theme.barHeight + Theme.barMargin
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Top
-    // Auto derives the exclusion from anchors + margins + implicit size when 3
-    // anchors are connected (top+left+right here). `Normal` would require an
-    // explicit `exclusionZone`; without one, nothing is reserved and tiled
-    // windows slide under the bar.
+    // Auto derives the exclusion from anchors + implicit size when 3 anchors
+    // are connected. `Normal` would require an explicit exclusionZone.
     WlrLayershell.exclusionMode: ExclusionMode.Auto
     WlrLayershell.namespace: "kuan-bar"
 
-    // Three independently-anchored clusters. Critically the Clock is anchored
-    // to the bar's geometric center, NOT positioned by a RowLayout — so when
-    // Battery / Volume / Workspaces change width (digits, bold weight on
-    // active workspace, etc.), the Clock cannot shift. That was the source of
-    // the per-update "glitch".
     Item {
-        id: row
+        id: strip
         anchors.fill: parent
-        anchors.margins: Theme.barMargin
+        anchors.topMargin: Theme.barMargin
+        anchors.leftMargin: Theme.barMargin + 4
+        anchors.rightMargin: Theme.barMargin + 4
 
-        RowLayout {
+        // Entrance: the pills drop in from above the edge and fade in. Only
+        // the visual moves — the exclusion zone is set from frame one, so
+        // tiled windows don't reflow mid-animation.
+        opacity: 0
+        transform: Translate { id: drop; y: -Theme.barHeight }
+        Component.onCompleted: intro.start()
+        ParallelAnimation {
+            id: intro
+            NumberAnimation { target: strip; property: "opacity"; to: 1; duration: Theme.durSlow; easing.type: Theme.easeOut }
+            NumberAnimation { target: drop; property: "y"; to: 0; duration: Theme.durSlow + 120; easing.type: Theme.easeSpring; easing.overshoot: 1.2 }
+        }
+
+        Row {
             anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.widgetGap
+            y: 0
+            spacing: 4
 
             Workspaces {}
-            IdleLockToggle {} // idle-lock on/off, just right of workspaces
+            AllamWidget {}
         }
 
         Clock {
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 0
         }
 
-        RowLayout {
+        Slab {
+            id: status
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.widgetGap
+            y: 0
+            height: Theme.pillHeight
+            width: tray.implicitWidth + Theme.pillPad * 2
 
-            Volume {}
-            Network {}
-            BatterySaverIndicator {} // hides when saver mode is off
-            Battery {} // self-hides when no battery
+            Row {
+                id: tray
+                x: Theme.pillPad
+                height: parent.height
+                spacing: Theme.pillGap
+
+                IdleLockToggle {}
+                Memory {}
+                Volume {}
+                Network {}
+                Battery {} // self-hides when no battery
+            }
         }
     }
 }

@@ -12,8 +12,11 @@
 	./apps/claude.nix
 	./apps/quickshell
 	./apps/cursor.nix
+	./apps/theme.nix
+	./apps/fastfetch
 	./apps/battery.nix
 	./apps/ssh.nix
+	./apps/pass.nix
 	./apps/orbitty
   ];
 
@@ -34,6 +37,8 @@
 
   home.sessionPath = [
     "/home/${username}/.npm-global/bin"
+    # `go install` puts binaries here; without it they are installed but invisible.
+    "/home/${username}/go/bin"
   ];
 
   programs.zsh.enable = true;

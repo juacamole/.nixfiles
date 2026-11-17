@@ -1,5 +1,6 @@
 // Centered overlay launcher backed by DesktopEntries. Type to filter, arrows
 // to navigate, Enter to launch, Esc to close. Opened via IPC from hyprland.
+// The panel floats up and settles; a raised chip glides between rows.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -10,139 +11,176 @@ import "."
 Scope {
     id: root
 
-    function open(): void  { win.visible = true; entry.text = ""; entry.forceActiveFocus() }
-    function close(): void { win.visible = false }
-    function toggle(): void { win.visible ? close() : open() }
+    function open(): void  { win.shown = true; entry.text = ""; entry.forceActiveFocus() }
+    function close(): void { win.shown = false }
+    function toggle(): void { win.shown ? close() : open() }
 
     PanelWindow {
         id: win
-        visible: false
+        property bool shown: false
+
+        // Stay mapped during the exit fade, but hand keyboard focus back the
+        // instant we start closing.
+        visible: shown || content.opacity > 0
         color: "transparent"
         anchors { top: true; left: true; right: true; bottom: true }
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        WlrLayershell.keyboardFocus: shown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
         // Dim backdrop
         Rectangle {
             anchors.fill: parent
-            color: "#80000000"
+            color: "#000000"
+            opacity: win.shown ? 0.45 : 0
+            Behavior on opacity { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeInOut } }
             MouseArea { anchors.fill: parent; onClicked: root.close() }
         }
 
-        Rectangle {
-            anchors.centerIn: parent
-            width: 520
-            height: 380
-            radius: Theme.widgetRadius
-            color: Theme.bg
-            border.color: Theme.widgetHi
-            border.width: 1
+        Item {
+            id: content
+            anchors.fill: parent
+            opacity: win.shown ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 220; easing.type: Theme.easeInOut } }
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 12
-
-                // Search entry
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 36
-                    radius: Theme.widgetRadius
-                    color: Theme.widget
-
-                    TextInput {
-                        id: entry
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: Theme.text
-                        font.family: Theme.fontUi
-                        font.pixelSize: 14
-                        focus: true
-                        clip: true
-
-                        Keys.onEscapePressed: root.close()
-                        Keys.onDownPressed:   list.incrementCurrentIndex()
-                        Keys.onUpPressed:     list.decrementCurrentIndex()
-                        Keys.onReturnPressed: list.launchCurrent()
-                        Keys.onEnterPressed:  list.launchCurrent()
-                    }
-
-                    Text {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        verticalAlignment: Text.AlignVCenter
-                        text: "Search applications…"
-                        color: Theme.faint
-                        font.family: Theme.fontUi
-                        font.pixelSize: 14
-                        visible: entry.text.length === 0
-                    }
+            Slab {
+                id: panel
+                anchors.centerIn: parent
+                width: 560
+                height: 420
+                radius: 20
+                shadow: Theme.cardShadow + 1
+                // Settle: a touch of scale + rise as it appears.
+                scale: win.shown ? 1 : 0.96
+                Behavior on scale { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeOut } }
+                transform: Translate {
+                    y: win.shown ? 0 : 10
+                    Behavior on y { NumberAnimation { duration: Theme.durMed; easing.type: Theme.easeOut } }
                 }
 
-                // Results
-                ListView {
-                    id: list
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    spacing: 2
-                    currentIndex: 0
-                    keyNavigationWraps: true
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 18
+                    spacing: 14
 
-                    model: {
-                        const q = entry.text.toLowerCase()
-                        const entries = DesktopEntries.applications.values
-                            .filter(e => !e.noDisplay)
-                            .filter(e => q.length === 0 || e.name.toLowerCase().includes(q))
-                        entries.sort((a, b) => a.name.localeCompare(b.name))
-                        return entries
-                    }
+                    // Search entry — sunken base-coloured field, yellow outline on focus.
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 40
+                        radius: height / 2
+                        color: Theme.base
+                        border.width: Theme.stroke
+                        border.color: entry.activeFocus ? Theme.yellow : Theme.ink
+                        Behavior on border.color { ColorAnimation { duration: Theme.durMed } }
 
-                    function launchCurrent(): void {
-                        const item = model[currentIndex]
-                        if (!item) return
-                        item.execute()
-                        root.close()
-                    }
-
-                    delegate: Rectangle {
-                        id: card
-                        required property var modelData
-                        required property int index
-                        width: ListView.view.width
-                        height: 32
-                        radius: 0
-                        color: ListView.isCurrentItem ? Theme.widgetHi : "transparent"
-
-                        RowLayout {
+                        TextInput {
+                            id: entry
                             anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 10
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: Theme.bright
+                            font.family: Theme.font
+                            font.pixelSize: 14
+                            focus: true
+                            clip: true
 
-                            Text {
-                                text: card.modelData.name
-                                color: Theme.text
-                                font.family: Theme.fontUi
-                                font.pixelSize: 13
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                text: card.modelData.genericName || ""
-                                color: Theme.faint
-                                font.family: Theme.fontUi
-                                font.pixelSize: 11
-                            }
+                            onTextChanged: list.currentIndex = 0
+                            Keys.onEscapePressed: root.close()
+                            Keys.onDownPressed:   list.incrementCurrentIndex()
+                            Keys.onUpPressed:     list.decrementCurrentIndex()
+                            Keys.onReturnPressed: list.launchCurrent()
+                            Keys.onEnterPressed:  list.launchCurrent()
                         }
 
-                        MouseArea {
+                        Text {
                             anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: { list.currentIndex = card.index; list.launchCurrent() }
+                            anchors.leftMargin: 16
+                            verticalAlignment: Text.AlignVCenter
+                            text: "Search applications…"
+                            color: Theme.muted
+                            font.family: Theme.font
+                            font.pixelSize: 14
+                            visible: entry.text.length === 0
+                        }
+                    }
+
+                    // Results
+                    ListView {
+                        id: list
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        spacing: 2
+                        currentIndex: 0
+                        keyNavigationWraps: true
+
+                        // Raised chip that glides between rows.
+                        highlight: Rectangle {
+                            radius: 10
+                            color: Theme.raised
+                            border.color: Theme.ink
+                            border.width: 1
+                        }
+                        highlightFollowsCurrentItem: true
+                        highlightMoveDuration: 220
+                        highlightMoveVelocity: -1
+                        highlightResizeDuration: 0
+                        highlightResizeVelocity: -1
+
+                        model: {
+                            const q = entry.text.toLowerCase()
+                            const entries = DesktopEntries.applications.values
+                                .filter(e => !e.noDisplay)
+                                .filter(e => q.length === 0 || e.name.toLowerCase().includes(q))
+                            entries.sort((a, b) => a.name.localeCompare(b.name))
+                            return entries
+                        }
+
+                        function launchCurrent(): void {
+                            const item = model[currentIndex]
+                            if (!item) return
+                            item.execute()
+                            root.close()
+                        }
+
+                        delegate: Item {
+                            id: card
+                            required property var modelData
+                            required property int index
+                            width: ListView.view.width
+                            height: 36
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 14
+                                anchors.rightMargin: 14
+                                spacing: 10
+
+                                Text {
+                                    text: card.modelData.name
+                                    color: card.ListView.isCurrentItem ? Theme.bright : Theme.text
+                                    font.family: Theme.font
+                                    font.pixelSize: 13
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    Behavior on color { ColorAnimation { duration: Theme.durFast } }
+                                }
+                                Text {
+                                    text: card.modelData.genericName || ""
+                                    color: Theme.muted
+                                    font.family: Theme.font
+                                    font.pixelSize: 11
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onEntered: list.currentIndex = card.index
+                                onClicked: { list.currentIndex = card.index; list.launchCurrent() }
+                            }
                         }
                     }
                 }

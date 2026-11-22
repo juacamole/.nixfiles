@@ -93,4 +93,5 @@ in {
 
   home.file."${cfg.configDir}/skills/caveman".source = ./skills/caveman;
   home.file."${cfg.configDir}/extensions/tps.ts".source = ./extensions/tps.ts;
+  home.file."${cfg.configDir}/extensions/allam-models.ts".source = ./extensions/allam-models.ts;
 }

@@ -29,11 +29,11 @@
     };
 
     autoCmd = [
-      # Overrides filetype plugins that set expandtab.
+      # Overrides filetype plugins that set expandtab. Python keeps spaces to match ruff.
       {
         event = [ "FileType" ];
         pattern = [ "*" ];
-        callback.__raw = "function() vim.opt_local.expandtab = false end";
+        callback.__raw = "function() vim.opt_local.expandtab = vim.bo.filetype == 'python' end";
       }
       {
         event = [ "TextYankPost" ];

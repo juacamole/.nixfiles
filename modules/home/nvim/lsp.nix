@@ -7,6 +7,16 @@
       ts_ls.enable = true;
       eslint.enable = true;
       jdtls.enable = true;
+      marksman.enable = true;
+      basedpyright = {
+        enable = true;
+        settings.basedpyright.analysis.typeCheckingMode = "standard";
+      };
+      # Lints and fixes only; hover comes from basedpyright.
+      ruff = {
+        enable = true;
+        onAttach.function = "client.server_capabilities.hoverProvider = false";
+      };
       rust_analyzer = {
         enable = true;
         installCargo = false;

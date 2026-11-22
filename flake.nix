@@ -49,13 +49,14 @@
         ];
       };
 
-      hosts = nixpkgs.lib.genAttrs [ "pommes" "salz" ] mkHost;
+      hosts = nixpkgs.lib.genAttrs [ "salz" ] mkHost;
     in {
-      nixosConfigurations = hosts // { main = hosts.pommes; };
+      nixosConfigurations = hosts;
 
       templates = {
         rust = { path = ./templates/rust; description = "Rust dev shell"; };
         cpp = { path = ./templates/cpp; description = "C++ dev shell"; };
+        python = { path = ./templates/python; description = "Python dev shell with numpy"; };
         generic = { path = ./templates/generic; description = "Generic dev shell"; };
         default = self.templates.generic;
       };

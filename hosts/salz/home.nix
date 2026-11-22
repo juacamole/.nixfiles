@@ -3,6 +3,7 @@
     ../../modules/home
     ../../modules/home/pi
     ../../modules/home/battery-saver.nix
+    ../../modules/home/orbitty
   ];
 
   services.battery-warn.device = "macsmc-battery";

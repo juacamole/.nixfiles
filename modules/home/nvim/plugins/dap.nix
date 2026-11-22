@@ -47,6 +47,8 @@ in {
         };
       };
 
+      # Runs the python3 on PATH, so a dev shell's packages are importable.
+      dap-python.enable = true;
       dap-ui.enable = true;
       dap-virtual-text.enable = true;
     };

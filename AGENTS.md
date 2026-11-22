@@ -1,12 +1,11 @@
 # .nixfiles
 
-NixOS + Home Manager flake for one user (`kuan`) on two laptops. Hyprland on
+NixOS + Home Manager flake for one user (`kuan`) on one laptop. Hyprland on
 Wayland, a hand-written Quickshell desktop shell, nixvim, zsh, kitty.
 
 | Host     | Machine                     | Arch    | Notes                                           |
 | -------- | --------------------------- | ------- | ----------------------------------------------- |
 | `salz`   | MacBook Pro M1 Max (Asahi)  | aarch64 | Daily driver. Local LLMs, Steam through muvm.   |
-| `pommes` | Acer, Intel + Nvidia PRIME  | x86_64  | Older laptop. `.#main` is an alias for it.      |
 
 ## Layout
 
@@ -28,7 +27,7 @@ templates/                `nix flake init` dev shells (rust, cpp, generic)
 docs/                     the reasoning behind non-obvious settings
 ```
 
-Where things go: a setting both machines want lives in `modules/`. Anything
+Where things go: a setting not tied to the hardware lives in `modules/`. Anything
 tied to one machine lives in `hosts/<name>/`. Modules do not branch on the
 host; the host's `configuration.nix` or `home.nix` sets the difference.
 
@@ -43,8 +42,6 @@ nix flake update nixpkgs-claude    # bump only claude-code
 
 - `--impure` is required on salz: the Asahi firmware is read from `/boot/vendorfw`.
 - Flakes only see files git knows about. `git add` new files before evaluating.
-- pommes cannot be built on salz (x86_64). Evaluate it instead; that still
-  catches every Nix-level mistake.
 - A change that alters no behaviour leaves the `drvPath` identical: moving
   files and editing Nix comments do not affect it. Compare it before and
   after a refactor.
@@ -85,7 +82,7 @@ nix flake update nixpkgs-claude    # bump only claude-code
 - **Two palettes.** `inkCream` for terminal-side programs, `night` for the
   shell and lock screen. `night` is duplicated in `Theme.qml`, which cannot
   import Nix; change both.
-- **Host differences in Hyprland** (monitors, Nvidia env, `monitors.conf`)
+- **Host differences in Hyprland** (monitors, `monitors.conf`)
   are set in `hosts/<name>/home.nix`, not in `modules/home/hyprland/`.
 
 ## Notes by topic

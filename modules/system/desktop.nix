@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   programs.hyprland.enable = true;
-  # Still needed for the xkb settings and for loading the nvidia driver.
+  # Still needed for the xkb settings.
   services.xserver.enable = true;
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 

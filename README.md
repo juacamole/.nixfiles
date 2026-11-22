@@ -1,12 +1,11 @@
 # .nixfiles
 
 NixOS and Home Manager configuration for `kuan`: Hyprland, a hand-written
-Quickshell desktop shell, nixvim, zsh and kitty, on two laptops.
+Quickshell desktop shell, nixvim, zsh and kitty, on a MacBook (Asahi).
 
 | Host     | Machine                    | Login           |
 | -------- | -------------------------- | --------------- |
 | `salz`   | MacBook Pro M1 Max (Asahi) | SDDM            |
-| `pommes` | Acer, Intel + Nvidia PRIME | greetd/tuigreet |
 
 ## Layout
 
@@ -26,7 +25,7 @@ docs/              why the non-obvious settings are what they are
 ## Apply
 
 ```bash
-sudo nixos-rebuild switch --impure --flake ~/.nixfiles#salz     # or #pommes
+sudo nixos-rebuild switch --impure --flake ~/.nixfiles#salz   
 ```
 
 Once applied, the alias `nix-switch` does the same. `--impure` is needed on

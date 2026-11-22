@@ -1,0 +1,98 @@
+Inkling 2: shrink the ubatch as the KV cache fills.
+
+The global attention layers build a dense relative-position bias kq_b of
+[n_kv, n_ubatch, n_head] f32 per layer. Once that exceeds the Vulkan
+maxStorageBufferRange (2 GiB on Honeykrisp, no shader64BitIndexing) the ops
+fall back to the CPU: prompt speed 66 -> 7 t/s at 32k context with -ub 1024,
+and the reserve allocates a 50-76 GB host compute buffer at 262k context.
+Cap n_ubatch so the tensor stays under 2000 MiB (LLAMA_UBATCH_CAP_BYTES).
+Measured 2026-11-22: 27.6k-token prompt 31 -> 78 t/s; host buffer 76 GB -> 132 MB.
+Other architectures are unaffected.
+
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 7490cf3..c837435 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -793,7 +793,7 @@ void llama_context::sched_reserve() {
+     const int64_t t_start_us = ggml_time_us();
+ 
+     const uint32_t n_seqs = cparams.n_seq_max;
+-    const uint32_t n_tokens = std::min(cparams.n_ctx, cparams.n_ubatch);
++    const uint32_t n_tokens = std::min(cparams.n_ctx, n_ubatch_cap(cparams.n_ctx));
+ 
+     const size_t max_nodes = this->graph_max_nodes();
+ 
+@@ -1008,6 +1008,24 @@ uint32_t llama_context::n_ubatch() const {
+     return cparams.n_ubatch;
+ }
+ 
++uint32_t llama_context::n_ubatch_cap(uint32_t n_kv) const {
++    // Inkling 2 builds a dense relative-position bias kq_b = [n_kv, n_ubatch, n_head] f32 per global
++    // layer. Above the backend's per-buffer limit (Vulkan maxStorageBufferRange, 2 GiB on Honeykrisp)
++    // those ops fall back to the CPU and prompt speed drops ~9x. Shrink the ubatch as the cache fills.
++    if (model.arch != LLM_ARCH_INKLING2 && model.arch != LLM_ARCH_INKLING2_LOOP) {
++        return cparams.n_ubatch;
++    }
++    static const uint64_t limit = [] {
++        const char * e = getenv("LLAMA_UBATCH_CAP_BYTES");
++        return e ? std::stoull(e) : (uint64_t) 2000 * 1024 * 1024;
++    }();
++    const uint64_t n_head = model.hparams.n_head();
++    n_kv = std::min<uint32_t>(cparams.n_ctx, GGML_PAD(n_kv + 512, 256));
++    uint64_t cap = limit / ((uint64_t) n_kv * n_head * sizeof(float));
++    cap = std::max<uint64_t>(32, cap & ~(uint64_t) 31);
++    return (uint32_t) std::min<uint64_t>(cparams.n_ubatch, cap);
++}
++
+ uint32_t llama_context::n_seq_max() const {
+     return cparams.n_seq_max;
+ }
+@@ -1069,7 +1087,7 @@ bool llama_context::memory_update(bool optimize) {
+         }
+ 
+         const uint32_t n_seqs = cparams.n_seq_max;
+-        const uint32_t n_tokens = std::min(cparams.n_ctx, cparams.n_ubatch);
++        const uint32_t n_tokens = std::min(cparams.n_ctx, n_ubatch_cap(cparams.n_ctx));
+ 
+         const uint32_t n_outputs_max = std::min(n_tokens, cparams.n_outputs_max);
+ 
+@@ -2250,8 +2268,25 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+ 
+     llama_memory_context_ptr mctx;
+ 
++    // upper bound for n_kv of this batch: cells already used by all sequences + the new tokens
++    uint32_t n_ubatch_eff = cparams.n_ubatch;
++    {
++        // per sequence: the larger of the cached end and the batch end (batch positions are absolute);
++        // hybrid memories can report -1 here, so the batch positions are the reliable part
++        uint64_t used = 0;
++        for (llama_seq_id s = 0; s < (llama_seq_id) cparams.n_seq_max; ++s) {
++            const llama_pos pmax = std::max(memory->seq_pos_max(s), balloc->seq_pos_max(s));
++            if (pmax >= 0) {
++                used += pmax + 1;
++            }
++        }
++        used = std::max<uint64_t>(used, n_tokens_all);
++        n_ubatch_eff = n_ubatch_cap((uint32_t) std::min<uint64_t>(used, cparams.n_ctx));
++        { static uint32_t last = 0; if (n_ubatch_eff != last) { LLAMA_LOG_DEBUG("%s: ubatch cap %u (n_kv est %llu)\n", __func__, n_ubatch_eff, (unsigned long long) used); last = n_ubatch_eff; } }
++    }
++
+     while (true) {
+-        mctx = memory->init_batch(*balloc, cparams.n_ubatch, embd_all);
++        mctx = memory->init_batch(*balloc, n_ubatch_eff, embd_all);
+         if (!mctx) {
+             return -2;
+         }
+diff --git a/src/llama-context.h b/src/llama-context.h
+index 3e3921c..f69eb66 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -69,6 +69,8 @@ struct llama_context {
+     uint32_t n_ctx_seq() const;
+     uint32_t n_batch()   const;
+     uint32_t n_ubatch()  const;
++    // ubatch cap so dense [n_kv, n_tokens, n_head] f32 attention tensors fit one GPU buffer
++    uint32_t n_ubatch_cap(uint32_t n_kv) const;
+     uint32_t n_seq_max() const;
+ 
+     uint32_t n_threads()       const;

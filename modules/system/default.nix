@@ -1,4 +1,4 @@
-{ pkgs, inputs, username, ... }: {
+{ config, pkgs, inputs, username, ... }: {
   imports = [
     ./desktop.nix
     ./audio.nix
@@ -20,6 +20,10 @@
     extraGroups = [ "networkmanager" "wheel" "video" "render" "docker" ];
     shell = pkgs.zsh;
   };
+  # D! empties ~/temp at boot only, not on every switch (tmpfiles-resetup).
+  systemd.tmpfiles.rules = [
+    "D! ${config.users.users.${username}.home}/temp 0755 ${username} users -"
+  ];
 
   virtualisation.docker.enable = true;
   # Lets unpatched dynamic binaries (npm packages etc.) run.

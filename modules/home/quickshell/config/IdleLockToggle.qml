@@ -1,4 +1,4 @@
-// Coffee cup: accent while the laptop is kept awake (idle-lock off).
+// Coffee cup: bright while the laptop is kept awake (idle-lock off).
 import QtQuick
 import "."
 
@@ -10,6 +10,6 @@ StatusItem {
     Icon {
         anchors.centerIn: parent
         text: Theme.iCoffee
-        color: root.awake ? Theme.accent : Theme.text
+        color: root.awake ? Theme.bright : Theme.text
     }
 }

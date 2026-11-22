@@ -46,9 +46,16 @@ let
     fi
   '';
 
-  # satty only saves when it is given an output filename, and it does not
-  # create the directory.
-  screenshot = "mkdir -p ~/Pictures/Screenshots && hyprshot -m region --raw | satty --filename - --output-filename ~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png --copy-command wl-copy";
+  # Region straight to the clipboard; only the 5 newest shots are kept.
+  screenshot = pkgs.writeShellScript "screenshot" ''
+    dir="$HOME/Pictures/Screenshots"
+    mkdir -p "$dir"
+    file="$dir/$(date +%Y-%m-%d_%H-%M-%S).png"
+    ${pkgs.hyprshot}/bin/hyprshot -m region --raw > "$file"
+    [ -s "$file" ] || { rm -f "$file"; exit 0; }
+    ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$file"
+    ls -1t "$dir"/????-??-??_??-??-??.png | tail -n +6 | xargs -r rm --
+  '';
 
   workspaceBinds = builtins.concatLists (builtins.genList (i:
     let

@@ -14,7 +14,6 @@
     awww
     brightnessctl
     hyprshot
-    satty
     wl-clipboard
     pavucontrol
     nwg-look

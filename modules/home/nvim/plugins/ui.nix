@@ -5,6 +5,11 @@ in {
   programs.nixvim = {
     colorscheme = "ashen";
 
+    # snacks.image converts non-PNG images with magick.
+    extraPackages = [
+      pkgs.imagemagick
+    ];
+
     extraPlugins = [
       (pkgs.vimUtils.buildVimPlugin {
         name = "ashen";
@@ -115,9 +120,12 @@ in {
         indent.enable = true;
       };
 
+      render-markdown.enable = true;
+
       snacks.settings = {
         indent.enabled = true;
         words.enabled = true;
+        image.enabled = true;
       };
 
       bufferline = {
